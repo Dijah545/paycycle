@@ -15,3 +15,12 @@ dialog{border:0;border-radius:18px;width:min(92vw,440px);padding:20px}dialog::ba
 .progress{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:8px}.progress>i{display:block;height:100%;background:#111827}
 .item-actions{display:flex;gap:6px}.mini{padding:7px 9px;font-size:.78rem}
 @media(max-width:600px){.summary-grid{grid-template-columns:1fr 1fr}.hero{grid-column:span 2}.actions{grid-template-columns:1fr 1fr 1fr}.app-header,main{padding:14px}.card{border-radius:14px}}
+
+.inline-check{grid-template-columns:auto 1fr;align-items:center;justify-content:start}
+.inline-check input{width:auto}
+.holiday-preview{padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;margin:10px 0 14px}
+.bill-row{align-items:flex-start}
+@media(max-width:650px){
+  .bill-row,.tx{align-items:flex-start;flex-wrap:wrap}
+  .bill-row .item-actions,.tx .item-actions{width:100%;justify-content:flex-end;flex-wrap:wrap}
+}

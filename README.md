@@ -1,32 +1,30 @@
-# PayCycle Budget V1.1
+# PayCycle Budget V1.2
 
-Offline-first personal budgeting PWA built around pay cycles.
+## New in V1.2
+- Paid/unpaid status for recurring bills, stored separately for each pay period
+- Free-to-Spend now subtracts only unpaid commitments
+- Edit accounts and opening balances
+- Edit budget categories and limits
+- Renaming a budget category updates existing categorized expense records
+- Edit recurring commitments
+- Edit savings/sinking funds
+- Automatic Jamaican holiday calendar option
+- Manual holiday dates remain available as overrides/additions
+- Holiday preview for the selected cycle's year
+- V1.1 budget-period navigation, transaction tracking, offline use, backups and PWA installation retained
 
-## Added in V1.1
-- Budget period selector with previous/next navigation
-- 12 previous pay periods and 6 upcoming periods
-- Budget categories with per-period limits
-- Category spending and remaining-budget progress
-- Recurring commitments/bills by due day
-- Savings and sinking funds
-- Free-to-spend calculation
-- Edit and delete transactions
-- Delete budgets, bills, and savings funds
-- Existing multiple-account, income, expense, transfer, offline, PWA, and backup features retained
+## Important holiday note
+The built-in calendar covers the standard Jamaican public-holiday pattern and provides weekend observation handling for budgeting calculations. Because payroll treatment or official observed dates can sometimes differ, manual holiday dates remain available and should be used when needed.
 
-## Important calculation note
-"Free to Spend" currently equals:
-current total account balances - recurring commitments in the selected period - reserved savings funds.
-
-This is deliberately simple for V1.1. In a later version, commitments can have paid/unpaid status so already-paid bills are not reserved twice.
+## Data
+All personal finance data stays in your browser's IndexedDB database. Nothing is committed to GitHub.
 
 ## Run locally
 ```bash
 python -m http.server 8000
 ```
-Open the project through the local server, not directly with file://.
+
+Then browse to the folder via localhost. Service workers do not operate from file://.
 
 ## GitHub Pages
-Upload the project contents to the root of a GitHub repository, enable Pages for the main branch/root, then install the resulting site to your phone's Home Screen.
-
-Financial records remain in IndexedDB on the device/browser and are not committed to GitHub.
+Upload the contents of this folder to the root of a GitHub repository and enable GitHub Pages from the main branch/root.

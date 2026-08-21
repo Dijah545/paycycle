@@ -42,7 +42,7 @@
         <strong id="spentCycle">$0</strong>
       </article>
       <article class="card">
-        <span>Upcoming Commitments</span>
+        <span>Unpaid Commitments</span>
         <strong id="commitmentsTotal">$0</strong>
       </article>
       <article class="card">
@@ -52,6 +52,7 @@
       <article class="card accent">
         <span>Free to Spend</span>
         <strong id="freeToSpend">$0</strong>
+        <small>Current cash less unpaid bills and reserved funds</small>
       </article>
     </section>
 
@@ -82,6 +83,7 @@
         <h2>Recurring Commitments</h2>
         <button data-open="commitmentModal">+ Bill</button>
       </div>
+      <p class="small muted">Mark a bill paid for each selected pay period. Paid bills stop reducing Free to Spend.</p>
       <div id="commitmentsList" class="list"></div>
     </section>
 
@@ -94,9 +96,7 @@
     </section>
 
     <section class="card">
-      <div class="section-title">
-        <h2>Transactions in Selected Period</h2>
-      </div>
+      <div class="section-title"><h2>Transactions in Selected Period</h2></div>
       <div id="transactionsList" class="list"></div>
     </section>
 
@@ -105,10 +105,15 @@
       <label>Nominal payday
         <input id="paydayInput" type="number" min="1" max="28" value="25">
       </label>
-      <p class="small muted">Weekend/holiday paydays move backward to the prior business day.</p>
-      <label>Holiday dates, one per line (YYYY-MM-DD)
-        <textarea id="holidayInput" rows="5"></textarea>
+      <label class="inline-check">
+        <input id="jamaicaHolidayToggle" type="checkbox">
+        Automatically include Jamaican public holidays
       </label>
+      <p class="small muted">If the nominal payday falls on a weekend or recognised holiday, the app moves it backward until it reaches a business day.</p>
+      <label>Additional/manual holiday dates, one per line (YYYY-MM-DD)
+        <textarea id="holidayInput" rows="4"></textarea>
+      </label>
+      <div id="holidayPreview" class="holiday-preview"></div>
       <div class="row wrap">
         <button id="saveSettingsBtn">Save settings</button>
         <button id="exportBtn" class="secondary">Export backup</button>
@@ -118,7 +123,8 @@
   </main>
 
   <dialog id="accountModal"><form method="dialog" id="accountForm">
-    <h3>Add Account</h3>
+    <h3 id="accountModalTitle">Add Account</h3>
+    <input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="JN Bank"></label>
     <label>Opening balance<input name="balance" required type="number" step="0.01" placeholder="0"></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
@@ -153,14 +159,16 @@
   </form></dialog>
 
   <dialog id="budgetModal"><form method="dialog" id="budgetForm">
-    <h3>Add Budget Category</h3>
+    <h3 id="budgetModalTitle">Add Budget Category</h3>
+    <input type="hidden" name="id">
     <label>Category<input name="name" required placeholder="Groceries"></label>
     <label>Budget for each pay period<input name="amount" required type="number" min="0" step="0.01"></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
   <dialog id="commitmentModal"><form method="dialog" id="commitmentForm">
-    <h3>Add Recurring Commitment</h3>
+    <h3 id="commitmentModalTitle">Add Recurring Commitment</h3>
+    <input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="Internet"></label>
     <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
     <label>Due day<input name="dueDay" required type="number" min="1" max="31"></label>
@@ -168,7 +176,8 @@
   </form></dialog>
 
   <dialog id="fundModal"><form method="dialog" id="fundForm">
-    <h3>Add Savings Fund</h3>
+    <h3 id="fundModalTitle">Add Savings Fund</h3>
+    <input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="Emergency Fund"></label>
     <label>Reserved amount<input name="amount" required type="number" min="0" step="0.01"></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
