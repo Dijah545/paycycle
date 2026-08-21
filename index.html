@@ -5,357 +5,212 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#006b4f">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Khadijah's Budget</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand-block">
-      <div class="brand-mark">K</div>
-      <div>
-        <p class="eyebrow">PERSONAL FINANCE</p>
-        <h1>Khadijah's Budget</h1>
-        <p class="muted small">Budget, save and track every pay cycle.</p>
-      </div>
+<header class="app-header">
+  <div class="brand-block"><div class="brand-mark">K</div><div><p class="eyebrow">PERSONAL FINANCE</p><h1>Khadijah's Budget</h1><p class="muted small">Budget, save and track every pay cycle.</p></div></div>
+</header>
+
+<nav class="tabs">
+  <button type="button" class="tab active" data-page="home">⌂ <span>Home</span></button>
+  <button type="button" class="tab" data-page="activity">↕ <span>Activity</span></button>
+  <button type="button" class="tab" data-page="plan">◎ <span>Plan</span></button>
+  <button type="button" class="tab" data-page="insights">▥ <span>Insights</span></button>
+  <button type="button" class="tab" data-page="settings">⚙ <span>Settings</span></button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+  <section class="period-bar card">
+    <button type="button" id="prevPeriod" class="secondary icon-btn">‹</button>
+    <div class="period-center">
+      <span class="muted small">Budget Period</span>
+      <select id="periodSelect"></select>
+      <span class="period-rule">25th → previous Jamaican business day when required</span>
     </div>
-    <button id="installBtn" class="secondary hidden">Install</button>
-  </header>
+    <button type="button" id="nextPeriod" class="secondary icon-btn">›</button>
+  </section>
 
-  <nav class="tabs" aria-label="Main navigation">
-    <button class="tab active" data-tab="dashboard"><span class="nav-icon">⌂</span><span>Home</span></button>
-    <button class="tab" data-tab="transactions"><span class="nav-icon">↕</span><span>Activity</span></button>
-    <button class="tab" data-tab="planning"><span class="nav-icon">◎</span><span>Plan</span></button>
-    <button class="tab" data-tab="reports"><span class="nav-icon">▥</span><span>Insights</span></button>
-    <button class="tab" data-tab="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
-  </nav>
+  <section class="money-hero">
+    <article class="free-card">
+      <div><p class="eyebrow light">AVAILABLE NOW</p><span>Free to Spend</span><strong id="freeToSpend">$0.00</strong><small>After unpaid bills and reserved savings</small></div>
+      <div class="payday-badge"><span>Selected cycle</span><strong id="cycleLabel">—</strong></div>
+    </article>
+    <div class="metric-strip">
+      <article><span>Total Position</span><strong id="totalPosition">$0</strong></article>
+      <article><span>Income</span><strong id="incomeTotal">$0</strong></article>
+      <article><span>Spent</span><strong id="spentTotal">$0</strong></article>
+      <article><span>Unpaid Bills</span><strong id="billsTotal">$0</strong></article>
+      <article><span>Reserved</span><strong id="reservedTotal">$0</strong></article>
+    </div>
+  </section>
 
-  <main>
-    <section id="dashboard" class="tab-panel active">
-      <section class="period-bar card">
-        <button id="prevPeriodBtn" class="secondary icon-btn" aria-label="Previous period">‹</button>
-        <div class="period-center">
-          <span class="muted small">Budget Period</span>
-          <select id="periodSelect" aria-label="Budget period">
-            <option value="-18">Jan 24, 2025 – Feb 24, 2025</option>
-            <option value="-17">Feb 25, 2025 – Mar 24, 2025</option>
-            <option value="-16">Mar 25, 2025 – Apr 24, 2025</option>
-            <option value="-15">Apr 25, 2025 – May 21, 2025</option>
-            <option value="-14">May 22, 2025 – Jun 24, 2025</option>
-            <option value="-13">Jun 25, 2025 – Jul 24, 2025</option>
-            <option value="-12">Jul 25, 2025 – Aug 24, 2025</option>
-            <option value="-11">Aug 25, 2025 – Sep 24, 2025</option>
-            <option value="-10">Sep 25, 2025 – Oct 23, 2025</option>
-            <option value="-9">Oct 24, 2025 – Nov 24, 2025</option>
-            <option value="-8">Nov 25, 2025 – Dec 23, 2025</option>
-            <option value="-7">Dec 24, 2025 – Jan 22, 2026</option>
-            <option value="-6">Jan 23, 2026 – Feb 24, 2026</option>
-            <option value="-5">Feb 25, 2026 – Mar 24, 2026</option>
-            <option value="-4">Mar 25, 2026 – Apr 23, 2026</option>
-            <option value="-3">Apr 24, 2026 – May 21, 2026</option>
-            <option value="-2">May 22, 2026 – Jun 24, 2026</option>
-            <option value="-1">Jun 25, 2026 – Jul 23, 2026</option>
-            <option value="0" selected>Current • Jul 24, 2026 – Aug 24, 2026</option>
-            <option value="1">Aug 25, 2026 – Sep 24, 2026</option>
-            <option value="2">Sep 25, 2026 – Oct 22, 2026</option>
-            <option value="3">Oct 23, 2026 – Nov 24, 2026</option>
-            <option value="4">Nov 25, 2026 – Dec 23, 2026</option>
-            <option value="5">Dec 24, 2026 – Jan 24, 2027</option>
-            <option value="6">Jan 25, 2027 – Feb 24, 2027</option>
-            <option value="7">Feb 25, 2027 – Mar 24, 2027</option>
-            <option value="8">Mar 25, 2027 – Apr 22, 2027</option>
-            <option value="9">Apr 23, 2027 – May 24, 2027</option>
-            <option value="10">May 25, 2027 – Jun 24, 2027</option>
-            <option value="11">Jun 25, 2027 – Jul 22, 2027</option>
-            <option value="12">Jul 23, 2027 – Aug 24, 2027</option>
-          </select>
-          <span class="period-rule">Payday rule: 25th → previous Jamaican business day when required</span>
-        </div>
-        <button id="nextPeriodBtn" class="secondary icon-btn" aria-label="Next period">›</button>
-      </section>
+  <section class="quick-actions action-cards">
+    <button type="button" data-open="accountModal"><span class="action-icon">＋</span><span><strong>Account</strong><small>Add account</small></span></button>
+    <button type="button" data-open="incomeModal"><span class="action-icon">＋</span><span><strong>Income</strong><small>Add money</small></span></button>
+    <button type="button" data-open="expenseModal"><span class="action-icon">−</span><span><strong>Expense</strong><small>Record spending</small></span></button>
+    <button type="button" data-open="transferModal"><span class="action-icon">⇄</span><span><strong>Transfer</strong><small>Move money</small></span></button>
+  </section>
 
-      <section class="money-hero">
-        <article class="free-card">
-          <div>
-            <p class="eyebrow light">AVAILABLE NOW</p>
-            <span>Free to Spend</span>
-            <strong id="freeToSpend">$0</strong>
-            <small>After unpaid bills and reserved savings</small>
-          </div>
-          <div class="payday-badge">
-            <span>Selected cycle</span>
-            <strong id="cycleMiniLabel">—</strong>
-          </div>
-        </article>
-        <div class="metric-strip">
-          <article><span>Total Position</span><strong id="totalPosition">$0</strong></article>
-          <article><span>Income</span><strong id="incomeCycle">$0</strong></article>
-          <article><span>Spent</span><strong id="spentCycle">$0</strong></article>
-          <article><span>Unpaid Bills</span><strong id="commitmentsTotal">$0</strong></article>
-          <article><span>Reserved</span><strong id="reservedSavings">$0</strong></article>
-        </div>
-      </section>
-      <section class="dashboard-charts">
-        <article class="card chart-card">
-          <div class="section-title">
-            <div><p class="eyebrow">CASH FLOW</p><h2>Income vs Spending</h2></div>
-            <span id="cashFlowStatus" class="status-chip">This period</span>
-          </div>
-          <div class="bar-chart">
-            <div class="bar-column">
-              <div class="bar-track"><div id="incomeBar" class="bar-fill income-bar"></div></div>
-              <strong id="incomeBarValue">$0</strong><span>Income</span>
-            </div>
-            <div class="bar-column">
-              <div class="bar-track"><div id="expenseBar" class="bar-fill expense-bar"></div></div>
-              <strong id="expenseBarValue">$0</strong><span>Spent</span>
-            </div>
-          </div>
-        </article>
-        <article class="card chart-card">
-          <div class="section-title">
-            <div><p class="eyebrow">BUDGET HEALTH</p><h2>Where Your Money Went</h2></div>
-          </div>
-          <div class="donut-layout">
-            <div id="spendDonut" class="donut"><div class="donut-center"><strong id="donutTotal">$0</strong><span>spent</span></div></div>
-            <div id="donutLegend" class="chart-legend"></div>
-          </div>
-        </article>
-      </section>
+  <section class="dashboard-charts">
+    <article class="card chart-card">
+      <div class="section-title"><div><p class="eyebrow">CASH FLOW</p><h2>Income vs Spending</h2></div></div>
+      <div class="bar-chart">
+        <div class="bar-column"><div class="bar-track"><div id="incomeBar" class="bar-fill income-bar"></div></div><strong id="incomeBarValue">$0</strong><span>Income</span></div>
+        <div class="bar-column"><div class="bar-track"><div id="expenseBar" class="bar-fill expense-bar"></div></div><strong id="expenseBarValue">$0</strong><span>Spent</span></div>
+      </div>
+    </article>
+    <article class="card chart-card">
+      <div class="section-title"><div><p class="eyebrow">SPENDING</p><h2>By Category</h2></div></div>
+      <div class="donut-layout"><div id="spendDonut" class="donut"><div class="donut-center"><strong id="donutTotal">$0</strong><span>spent</span></div></div><div id="donutLegend" class="chart-legend"></div></div>
+    </article>
+  </section>
 
-      <section class="card">
-        <div class="section-title"><h2>Accounts</h2><button data-open="accountModal">+ Account</button></div>
-        <div id="accountsList" class="list"></div>
-      </section>
+  <section class="card"><div class="section-title"><h2>Accounts</h2><button type="button" data-open="accountModal">+ Account</button></div><div id="accountsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Budgets</h2><button type="button" data-open="budgetModal">+ Budget</button></div><div id="budgetsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Recurring Bills</h2><button type="button" data-open="billModal">+ Bill</button></div><div id="billsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Savings Funds</h2><button type="button" data-open="fundModal">+ Fund</button></div><div id="fundsList" class="list"></div></section>
+</section>
 
-      <section class="quick-actions action-cards">
-        <button data-open="incomeModal"><span class="action-icon">＋</span><span><strong>Income</strong><small>Add money received</small></span></button>
-        <button data-open="expenseModal"><span class="action-icon">−</span><span><strong>Expense</strong><small>Record spending</small></span></button>
-        <button data-open="transferModal"><span class="action-icon">⇄</span><span><strong>Transfer</strong><small>Move between accounts</small></span></button>
-      </section>
+<section id="activity" class="page">
+  <section class="card"><div class="section-title"><h2>Activity</h2><button type="button" data-open="expenseModal">+ Expense</button></div>
+  <div class="filters"><select id="typeFilter"><option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option><option value="transfer">Transfers</option></select><input id="searchTx" type="search" placeholder="Search transactions"></div>
+  <div id="transactionsList" class="list"></div></section>
+</section>
 
-      <section class="card">
-        <div class="section-title"><h2>Budget Categories</h2><button data-open="budgetModal">+ Budget</button></div>
-        <div id="budgetList" class="list"></div>
-      </section>
+<section id="plan" class="page">
+  <section class="card"><div class="section-title"><h2>Budget Plan</h2><button type="button" data-open="budgetModal">+ Budget</button></div><div id="planBudgetsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Upcoming Bills</h2><button type="button" data-open="billModal">+ Bill</button></div><div id="planBillsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Savings</h2><button type="button" data-open="fundModal">+ Fund</button></div><div id="planFundsList" class="list"></div></section>
+</section>
 
-      <section class="card">
-        <div class="section-title"><h2>Recurring Commitments</h2><button data-open="commitmentModal">+ Bill</button></div>
-        <p class="small muted">Paying a bill can automatically create the matching expense transaction.</p>
-        <div id="commitmentsList" class="list"></div>
-      </section>
+<section id="insights" class="page">
+  <section class="card"><div class="section-title"><h2>Financial Summary</h2></div><div id="summaryMetrics" class="report-grid"></div></section>
+  <section class="card"><div class="section-title"><h2>Spending by Category</h2></div><div id="categoryReport" class="list"></div></section>
+</section>
 
-      <section class="card">
-        <div class="section-title"><h2>Savings & Sinking Funds</h2><button data-open="fundModal">+ Fund</button></div>
-        <div id="fundsList" class="list"></div>
-      </section>
-      <section class="card">
-        <div class="section-title"><div><p class="eyebrow">RECENT</p><h2>Latest Activity</h2></div><button id="viewAllTransactions" class="secondary">View all</button></div>
-        <div id="recentTransactions" class="list"></div>
-      </section>
-    </section>
+<section id="settings" class="page">
+  <section class="card"><div class="section-title"><h2>Pay Cycle</h2></div><p><strong>Payday:</strong> 25th of each month</p><p class="muted small">If the 25th is a weekend or Jamaican public holiday, payday moves back to the preceding business day.</p></section>
+  <section class="card"><div class="section-title"><h2>Data</h2></div><div class="row wrap"><button type="button" id="exportData">Export Backup</button><label class="file-button secondary">Restore Backup<input id="importData" type="file" accept=".json"></label><button type="button" id="resetData" class="danger">Reset App</button></div></section>
+</section>
+</main>
 
-    <section id="transactions" class="tab-panel">
-      <section class="card">
-        <div class="section-title"><h2>Transactions</h2>
-          <div class="item-actions"><button data-open="incomeModal">+ Income</button><button data-open="expenseModal">− Expense</button></div>
-        </div>
-        <div class="filters">
-          <select id="txTypeFilter">
-            <option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option><option value="transfer">Transfers</option>
-          </select>
-          <select id="txAccountFilter"><option value="all">All accounts</option></select>
-          <input id="txSearch" type="search" placeholder="Search transactions">
-        </div>
-        <div id="transactionsList" class="list"></div>
-      </section>
-    </section>
+<!-- dialogs -->
+<dialog id="accountModal"><form id="accountForm">
+  <h3>Add Account</h3><label>Name<input name="name" required placeholder="JN Bank"></label><label>Type<select name="type"><option>Bank</option><option>Savings</option><option>Cash</option><option>Wallet</option></select></label><label>Opening Balance<input name="balance" type="number" step="0.01" required value="0"></label><label class="inline-check"><input name="liquid" type="checkbox" checked>Include in Free to Spend</label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Account</button></div>
+</form></dialog>
 
-    <section id="planning" class="tab-panel">
-      <section class="card">
-        <div class="section-title"><h2>Planned Income</h2><button data-open="plannedIncomeModal">+ Planned Income</button></div>
-        <p class="small muted">Forecast money you expect to receive. Planned income does not change an account balance until recorded as received.</p>
-        <div id="plannedIncomeList" class="list"></div>
-      </section>
+<dialog id="incomeModal"><form id="incomeForm">
+  <h3>Add Income</h3><label>Source<input name="description" required placeholder="Salary"></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label><label>Deposit To<select name="accountId" required></select></label><label>Date<input name="date" type="date" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Income</button></div>
+</form></dialog>
 
-      <section class="card">
-        <div class="section-title"><h2>Debt & Credit</h2><button data-open="debtModal">+ Debt</button></div>
-        <div id="debtsList" class="list"></div>
-      </section>
+<dialog id="expenseModal"><form id="expenseForm">
+  <h3>Add Expense</h3><label>Description<input name="description" required placeholder="Groceries"></label><label>Category<select name="category"></select></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label><label>Paid From<select name="accountId" required></select></label><label>Date<input name="date" type="date" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Expense</button></div>
+</form></dialog>
 
-      <section class="card">
-        <div class="section-title"><h2>Recurring Commitments</h2><button data-open="commitmentModal">+ Bill</button></div>
-        <div id="planningCommitmentsList" class="list"></div>
-      </section>
+<dialog id="transferModal"><form id="transferForm">
+  <h3>Transfer</h3><label>From<select name="from" required></select></label><label>To<select name="to" required></select></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label><label>Date<input name="date" type="date" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Transfer</button></div>
+</form></dialog>
 
-      <section class="card">
-        <div class="section-title"><h2>Savings Funds</h2><button data-open="fundModal">+ Fund</button></div>
-        <div id="planningFundsList" class="list"></div>
-      </section>
-    </section>
+<dialog id="budgetModal"><form id="budgetForm">
+  <h3>Add Budget</h3><label>Category<input name="name" required placeholder="Groceries"></label><label>Amount per pay cycle<input name="amount" type="number" min="0" step="0.01" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Budget</button></div>
+</form></dialog>
 
-    <section id="reports" class="tab-panel">
-      <section class="card">
-        <div class="section-title"><h2>Selected Period Summary</h2></div>
-        <div id="reportSummary" class="report-grid"></div>
-      </section>
-      <section class="card">
-        <div class="section-title"><h2>Spending by Category</h2></div>
-        <div id="categoryReport" class="list"></div>
-      </section>
-      <section class="card">
-        <div class="section-title"><h2>Spending by Account</h2></div>
-        <div id="accountReport" class="list"></div>
-      </section>
-      <section class="card">
-        <div class="section-title"><h2>Exports</h2></div>
-        <div class="row wrap">
-          <button id="exportCsvBtn">Export Transactions CSV</button>
-          <button id="exportSummaryCsvBtn" class="secondary">Export Period Summary CSV</button>
-        </div>
-      </section>
-    </section>
+<dialog id="billModal"><form id="billForm">
+  <h3>Add Recurring Bill</h3><label>Name<input name="name" required placeholder="Internet"></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Due day<input name="dueDay" type="number" min="1" max="31" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Bill</button></div>
+</form></dialog>
 
-    <section id="settings" class="tab-panel">
-      <section class="card">
-        <div class="section-title"><h2>Pay Cycle Settings</h2></div>
-        <label>Nominal payday
-          <input id="paydayInput" type="number" min="1" max="28" value="25">
-        </label>
-        <label class="inline-check">
-          <input id="jamaicaHolidayToggle" type="checkbox">
-          Automatically include Jamaican public holidays
-        </label>
-        <p class="small muted">If the nominal payday falls on a weekend or holiday, the cycle begins on the prior business day.</p>
-        <label>Additional/manual holiday dates, one per line (YYYY-MM-DD)
-          <textarea id="holidayInput" rows="4"></textarea>
-        </label>
-        <div id="holidayPreview" class="holiday-preview"></div>
-        <button id="saveSettingsBtn">Save settings</button>
-      </section>
+<dialog id="fundModal"><form id="fundForm">
+  <h3>Add Savings Fund</h3><label>Name<input name="name" required placeholder="Emergency Fund"></label><label>Reserved Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Target<input name="target" type="number" min="0" step="0.01"></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Fund</button></div>
+</form></dialog>
 
-      <section class="card">
-        <div class="section-title"><h2>Data & Backup</h2></div>
-        <p class="small muted">Your financial records are stored locally on this device/browser. Back up regularly.</p>
-        <div class="row wrap">
-          <button id="exportBtn">Export Full Backup</button>
-          <label class="file-button secondary">Restore Backup<input id="importInput" type="file" accept="application/json"></label>
-          <button id="resetBtn" class="danger">Reset App Data</button>
-        </div>
-      </section>
-    </section>
-  </main>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const money=new Intl.NumberFormat('en-JM',{style:'currency',currency:'JMD',maximumFractionDigits:2});
+const KEY='khadijah-budget-state-v4';
+const uid=()=> (crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayIso=()=>iso(new Date());
 
-  <!-- Account -->
-  <dialog id="accountModal"><form method="dialog" id="accountForm">
-    <h3 id="accountModalTitle">Add Account</h3><input type="hidden" name="id">
-    <label>Name<input name="name" required placeholder="JN Bank"></label>
-    <label>Type<select name="type"><option value="bank">Bank</option><option value="savings">Savings</option><option value="cash">Cash</option><option value="wallet">Wallet</option></select></label>
-    <label>Opening balance<input name="balance" required type="number" step="0.01" placeholder="0"></label>
-    <label class="inline-check"><input name="liquid" type="checkbox" checked>Include in Free to Spend calculation</label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
+let state={accounts:[],transactions:[],budgets:[],bills:[],funds:[],billPaid:{}};
+try{state=Object.assign(state,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+let periodOffset=0;
 
-  <!-- Income -->
-  <dialog id="incomeModal"><form method="dialog" id="incomeForm">
-    <h3>Add Income</h3>
-    <label>Source<input name="description" required placeholder="Salary"></label>
-    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-    <label>Deposit to<select name="accountId" required></select></label>
-    <label>Date<input name="date" required type="date"></label>
-    <label>Notes<textarea name="notes" rows="2"></textarea></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Expense -->
-  <dialog id="expenseModal"><form method="dialog" id="expenseForm">
-    <h3>Add Expense</h3>
-    <label>Description<input name="description" required placeholder="Groceries"></label>
-    <label>Category<select name="category" id="expenseCategory"></select></label>
-    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-    <label>Paid from<select name="accountId" required></select></label>
-    <label>Date<input name="date" required type="date"></label>
-    <label>Notes<textarea name="notes" rows="2"></textarea></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Transfer -->
-  <dialog id="transferModal"><form method="dialog" id="transferForm">
-    <h3>Transfer</h3>
-    <label>From<select name="fromAccountId" required></select></label>
-    <label>To<select name="toAccountId" required></select></label>
-    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-    <label>Date<input name="date" required type="date"></label>
-    <label>Notes<textarea name="notes" rows="2"></textarea></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Budget -->
-  <dialog id="budgetModal"><form method="dialog" id="budgetForm">
-    <h3 id="budgetModalTitle">Add Budget Category</h3><input type="hidden" name="id">
-    <label>Category<input name="name" required placeholder="Groceries"></label>
-    <label>Budget per pay period<input name="amount" required type="number" min="0" step="0.01"></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Bill -->
-  <dialog id="commitmentModal"><form method="dialog" id="commitmentForm">
-    <h3 id="commitmentModalTitle">Add Recurring Commitment</h3><input type="hidden" name="id">
-    <label>Name<input name="name" required placeholder="Internet"></label>
-    <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
-    <label>Due day<input name="dueDay" required type="number" min="1" max="31"></label>
-    <label>Expense category<select name="category" id="commitmentCategory"></select></label>
-    <label>Default payment account<select name="accountId"></select></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Pay bill -->
-  <dialog id="payBillModal"><form method="dialog" id="payBillForm">
-    <h3>Pay Bill</h3><input type="hidden" name="commitmentId">
-    <p id="payBillName" class="muted"></p>
-    <label>Amount paid<input name="amount" required type="number" min="0.01" step="0.01"></label>
-    <label>Paid from<select name="accountId" required></select></label>
-    <label>Date<input name="date" required type="date"></label>
-    <label class="inline-check"><input name="createExpense" type="checkbox" checked>Create expense transaction</label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Mark Paid</button></div>
-  </form></dialog>
-
-  <!-- Fund -->
-  <dialog id="fundModal"><form method="dialog" id="fundForm">
-    <h3 id="fundModalTitle">Add Savings Fund</h3><input type="hidden" name="id">
-    <label>Name<input name="name" required placeholder="Emergency Fund"></label>
-    <label>Reserved amount<input name="amount" required type="number" min="0" step="0.01"></label>
-    <label>Target amount<input name="target" type="number" min="0" step="0.01" placeholder="Optional"></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Planned income -->
-  <dialog id="plannedIncomeModal"><form method="dialog" id="plannedIncomeForm">
-    <h3 id="plannedIncomeModalTitle">Add Planned Income</h3><input type="hidden" name="id">
-    <label>Source<input name="description" required placeholder="Salary"></label>
-    <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
-    <label>Expected day of pay cycle<input name="dayOffset" type="number" min="0" max="31" value="0"></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Debt -->
-  <dialog id="debtModal"><form method="dialog" id="debtForm">
-    <h3 id="debtModalTitle">Add Debt</h3><input type="hidden" name="id">
-    <label>Name<input name="name" required placeholder="Credit Card"></label>
-    <label>Current balance<input name="balance" required type="number" min="0" step="0.01"></label>
-    <label>Minimum payment<input name="minimumPayment" type="number" min="0" step="0.01"></label>
-    <label>Due day<input name="dueDay" type="number" min="1" max="31"></label>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
-  </form></dialog>
-
-  <!-- Transaction editor -->
-  <dialog id="editModal"><form method="dialog" id="editForm">
-    <h3>Edit Transaction</h3><input type="hidden" name="id"><div id="editFields"></div>
-    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save Changes</button></div>
-  </form></dialog>
-
-  <script type="module" src="js/app.js"></script>
+function easter(y){let a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31)-1,da=(h+l-7*m+114)%31+1;return new Date(y,mo,da,12)}
+function addDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function nthMonday(y,mo,n){let d=new Date(y,mo,1,12),diff=(1-d.getDay()+7)%7;d.setDate(1+diff+(n-1)*7);return d}
+function fixedHoliday(y,mo,da){let d=new Date(y,mo,da,12),a=[iso(d)];if(d.getDay()===6)a.push(iso(addDays(d,2)));if(d.getDay()===0)a.push(iso(addDays(d,1)));return a}
+function holidays(y){let e=easter(y),a=[];[[0,1],[4,23],[7,1],[7,6],[11,25],[11,26]].forEach(x=>a.push(...fixedHoliday(y,x[0],x[1])));a.push(iso(addDays(e,-46)),iso(addDays(e,-2)),iso(addDays(e,1)),iso(nthMonday(y,9,3)));return new Set(a)}
+function payday(y,mo){let d=new Date(y,mo,25,12),hs=new Set([...holidays(y-1),...holidays(y),...holidays(y+1)]);while(d.getDay()===0||d.getDay()===6||hs.has(iso(d)))d.setDate(d.getDate()-1);return d}
+function currentBaseMonth(){let now=new Date(),p=payday(now.getFullYear(),now.getMonth());return now>=p?new Date(now.getFullYear(),now.getMonth(),1,12):new Date(now.getFullYear(),now.getMonth()-1,1,12)}
+function cycle(off=periodOffset){let b=currentBaseMonth(),nom=new Date(b.getFullYear(),b.getMonth()+off,1,12),start=payday(nom.getFullYear(),nom.getMonth()),n=new Date(nom.getFullYear(),nom.getMonth()+1,1,12),next=payday(n.getFullYear(),n.getMonth()),end=addDays(next,-1);return{start,end,next}}
+function inCycle(s,c){let d=new Date(s+'T12:00:00');return d>=c.start&&d<=c.end}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function accountName(id){let a=state.accounts.find(x=>x.id===id);return a?a.name:'Unknown'}
+function balance(id){let a=state.accounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.opening||0);state.transactions.forEach(t=>{if(t.type==='income'&&t.accountId===id)v+=Number(t.amount);if(t.type==='expense'&&t.accountId===id)v-=Number(t.amount);if(t.type==='transfer'){if(t.from===id)v-=Number(t.amount);if(t.to===id)v+=Number(t.amount)}});return v}
+function fmt(d){return d.toLocaleDateString('en-JM',{day:'numeric',month:'short',year:'numeric'})}
+function options(){
+ let s=$('#periodSelect');s.innerHTML='';
+ for(let i=-18;i<=12;i++){let c=cycle(i),o=document.createElement('option');o.value=i;o.textContent=(i===0?'Current • ':'')+fmt(c.start)+' – '+fmt(c.end);if(i===periodOffset)o.selected=true;s.appendChild(o)}
+}
+function accountSelects(){
+ let opts=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+ $$('select[name=accountId],select[name=from],select[name=to]').forEach(s=>s.innerHTML=opts);
+ let cats='<option value="">Uncategorised</option>'+state.budgets.map(b=>`<option>${b.name}</option>`).join('');
+ $('#expenseForm select[name=category]').innerHTML=cats;
+}
+function metrics(){
+ let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+ let assets=state.accounts.reduce((s,a)=>s+balance(a.id),0),liquid=state.accounts.filter(a=>a.liquid!==false).reduce((s,a)=>s+balance(a.id),0),reserved=state.funds.reduce((s,f)=>s+Number(f.amount),0);
+ let unpaid=state.bills.reduce((s,b)=>s+(state.billPaid[iso(c.start)+'|'+b.id]?0:Number(b.amount)),0);
+ return{c,tx,income,spent,assets,liquid,reserved,unpaid,free:liquid-reserved-unpaid}
+}
+function render(){
+ options();accountSelects();let m=metrics();
+ $('#cycleLabel').textContent=fmt(m.c.start)+' – '+fmt(m.c.end);$('#freeToSpend').textContent=money.format(m.free);$('#totalPosition').textContent=money.format(m.assets);$('#incomeTotal').textContent=money.format(m.income);$('#spentTotal').textContent=money.format(m.spent);$('#billsTotal').textContent=money.format(m.unpaid);$('#reservedTotal').textContent=money.format(m.reserved);
+ $('#accountsList').innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="account"><div><strong>${a.name}</strong><div class="tx-meta">${a.type}</div></div><strong>${money.format(balance(a.id))}</strong></div>`).join(''):'<p class="muted">Tap + Account to add your first account.</p>';
+ let budgetHtml=state.budgets.length?state.budgets.map(b=>{let used=m.tx.filter(t=>t.type==='expense'&&t.category===b.name).reduce((s,t)=>s+Number(t.amount),0),pct=Math.min(100,b.amount?used/b.amount*100:0);return`<div class="budget-row"><div style="flex:1"><div class="row"><strong>${b.name}</strong><span>${money.format(Math.max(0,b.amount-used))} left</span></div><div class="tx-meta">${money.format(used)} of ${money.format(b.amount)}</div><div class="progress"><i style="width:${pct}%"></i></div></div></div>`}).join(''):'<p class="muted">No budgets yet.</p>';
+ $('#budgetsList').innerHTML=budgetHtml;$('#planBudgetsList').innerHTML=budgetHtml;
+ let billHtml=state.bills.length?state.bills.map(b=>{let key=iso(m.c.start)+'|'+b.id,paid=!!state.billPaid[key];return`<div class="bill-row"><div><strong>${b.name}</strong><div class="tx-meta">Due day ${b.dueDay} • ${paid?'Paid':'Unpaid'}</div></div><div class="item-actions"><strong>${money.format(b.amount)}</strong><button type="button" class="mini ${paid?'secondary':'success'}" data-pay="${b.id}">${paid?'Undo':'Mark Paid'}</button></div></div>`}).join(''):'<p class="muted">No recurring bills yet.</p>';
+ $('#billsList').innerHTML=billHtml;$('#planBillsList').innerHTML=billHtml;
+ let fundHtml=state.funds.length?state.funds.map(f=>`<div class="fund-row"><div><strong>${f.name}</strong><div class="tx-meta">${f.target?money.format(f.amount)+' of '+money.format(f.target):'Reserved savings'}</div></div><strong>${money.format(f.amount)}</strong></div>`).join(''):'<p class="muted">No savings funds yet.</p>';
+ $('#fundsList').innerHTML=fundHtml;$('#planFundsList').innerHTML=fundHtml;
+ let type=$('#typeFilter').value,q=$('#searchTx').value.toLowerCase(),rows=[...m.tx].filter(t=>(type==='all'||t.type===type)&&JSON.stringify(t).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
+ $('#transactionsList').innerHTML=rows.length?rows.map(t=>`<div class="tx"><div><strong>${t.description||'Transfer'}</strong><div class="tx-meta">${t.date} • ${t.type==='transfer'?accountName(t.from)+' → '+accountName(t.to):accountName(t.accountId)}</div></div><strong class="${t.type==='income'?'positive':t.type==='expense'?'negative':''}">${t.type==='income'?'+':t.type==='expense'?'-':''}${money.format(t.amount)}</strong></div>`).join(''):'<p class="muted">No transactions in this period.</p>';
+ $('#summaryMetrics').innerHTML=`<div class="metric"><span>Income</span><strong>${money.format(m.income)}</strong></div><div class="metric"><span>Spent</span><strong>${money.format(m.spent)}</strong></div><div class="metric"><span>Net Cash Flow</span><strong>${money.format(m.income-m.spent)}</strong></div><div class="metric"><span>Free to Spend</span><strong>${money.format(m.free)}</strong></div>`;
+ let cats={};m.tx.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
+ let max=Math.max(m.income,m.spent,1);$('#incomeBar').style.height=Math.max(3,m.income/max*100)+'%';$('#expenseBar').style.height=Math.max(3,m.spent/max*100)+'%';$('#incomeBarValue').textContent=money.format(m.income);$('#expenseBarValue').textContent=money.format(m.spent);$('#donutTotal').textContent=money.format(m.spent);
+ let palette=['#008b68','#e71d4f','#1769e0','#5b35d5','#ff8a00','#6b7280'],entries=Object.entries(cats),cur=0,parts=[],leg=[];entries.forEach(([k,v],i)=>{let p=m.spent?v/m.spent*100:0,end=cur+p,col=palette[i%palette.length];parts.push(`${col} ${cur}% ${end}%`);leg.push(`<div class="legend-item"><i class="legend-dot" style="background:${col}"></i><span>${k}</span><strong>${Math.round(p)}%</strong></div>`);cur=end});$('#spendDonut').style.background=entries.length?`conic-gradient(${parts.join(',')})`:'#e2e8f0';$('#donutLegend').innerHTML=leg.join('')||'<p class="muted small">No expenses yet.</p>';
+}
+function open(id){let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');if(f){f.reset();d.querySelectorAll('input[type=date]').forEach(x=>x.value=todayIso())}if(d.showModal)d.showModal();else d.setAttribute('open','')}
+function closeDialog(el){let d=el.closest('dialog');if(d){if(d.close)d.close();else d.removeAttribute('open')}}
+document.addEventListener('click',e=>{
+ let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
+ let cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeDialog(cl);return}
+ let pay=e.target.closest('[data-pay]');if(pay){let key=iso(cycle().start)+'|'+pay.dataset.pay;state.billPaid[key]=!state.billPaid[key];save();render();return}
+ let tab=e.target.closest('[data-page]');if(tab){$$('.tab').forEach(x=>x.classList.remove('active'));$$('.page').forEach(x=>x.classList.remove('active'));tab.classList.add('active');$('#'+tab.dataset.page).classList.add('active');window.scrollTo(0,0)}
+});
+$('#periodSelect').addEventListener('change',e=>{periodOffset=Number(e.target.value);render()});$('#prevPeriod').onclick=()=>{periodOffset=Math.max(-18,periodOffset-1);render()};$('#nextPeriod').onclick=()=>{periodOffset=Math.min(12,periodOffset+1);render()};
+$('#typeFilter').onchange=render;$('#searchTx').oninput=render;
+$('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.accounts.push({id:uid(),name:f.get('name').trim(),type:f.get('type'),opening:Number(f.get('balance')),liquid:f.get('liquid')==='on'});save();closeDialog(e.target);render()};
+$('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
+$('#expenseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'expense',description:f.get('description').trim(),category:f.get('category'),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
+$('#transferForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);if(f.get('from')===f.get('to')){alert('Choose different accounts.');return}state.transactions.push({id:uid(),type:'transfer',description:'Transfer',amount:Number(f.get('amount')),from:f.get('from'),to:f.get('to'),date:f.get('date')});save();closeDialog(e.target);render()};
+$('#budgetForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.budgets.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount'))});save();closeDialog(e.target);render()};
+$('#billForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.bills.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),dueDay:Number(f.get('dueDay'))});save();closeDialog(e.target);render()};
+$('#fundForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.funds.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),target:Number(f.get('target')||0)});save();closeDialog(e.target);render()};
+$('#exportData').onclick=()=>{let a=document.createElement('a'),blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='khadijahs-budget-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+$('#importData').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{state=Object.assign({accounts:[],transactions:[],budgets:[],bills:[],funds:[],billPaid:{}},JSON.parse(await f.text()));save();render();alert('Backup restored.')}catch(err){alert('Invalid backup file.')}e.target.value=''};
+$('#resetData').onclick=()=>{if(confirm("Erase all Khadijah's Budget data on this device?")){state={accounts:[],transactions:[],budgets:[],bills:[],funds:[],billPaid:{}};save();render()}};
+render();
+})();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./service-worker.js').catch(()=>{});}
+</script>
 </body>
 </html>
