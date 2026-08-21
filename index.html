@@ -53,6 +53,7 @@
     <button type="button" data-open="incomeModal"><span class="action-icon">＋</span><span><strong>Income</strong><small>Add money</small></span></button>
     <button type="button" data-open="expenseModal"><span class="action-icon">−</span><span><strong>Expense</strong><small>Record spending</small></span></button>
     <button type="button" data-open="transferModal"><span class="action-icon">⇄</span><span><strong>Transfer</strong><small>Move money</small></span></button>
+    <button type="button" data-open="adjustmentModal"><span class="action-icon">≋</span><span><strong>Existing Funds</strong><small>Add money already in an account</small></span></button>
   </section>
 
   <section class="dashboard-charts">
@@ -77,7 +78,7 @@
 
 <section id="activity" class="page">
   <section class="card"><div class="section-title"><h2>Activity</h2><button type="button" data-open="expenseModal">+ Expense</button></div>
-  <div class="filters"><select id="typeFilter"><option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option><option value="transfer">Transfers</option></select><input id="searchTx" type="search" placeholder="Search transactions"></div>
+  <div class="filters"><select id="typeFilter"><option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option><option value="transfer">Transfers</option><option value="adjustment">Existing Funds</option></select><input id="searchTx" type="search" placeholder="Search transactions"></div>
   <div id="transactionsList" class="list"></div></section>
 </section>
 
@@ -100,7 +101,10 @@
 
 <!-- dialogs -->
 <dialog id="accountModal"><form id="accountForm">
-  <h3>Add Account</h3><label>Name<input name="name" required placeholder="JN Bank"></label><label>Type<select name="type"><option>Bank</option><option>Savings</option><option>Cash</option><option>Wallet</option></select></label><label>Opening Balance<input name="balance" type="number" step="0.01" required value="0"></label><label class="inline-check"><input name="liquid" type="checkbox" checked>Include in Free to Spend</label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Account</button></div>
+  <h3>Add Account</h3><label>Name<input name="name" required placeholder="JN Bank"></label><label>Type<select name="type"><option>Bank</option><option>Savings</option><option>Cash</option><option>Wallet</option></select></label><label>Existing / Opening Balance
+    <input name="balance" type="number" step="0.01" required value="0">
+    <span class="field-help">Enter money already in this account before adding salary or other transactions.</span>
+  </label><label class="inline-check"><input name="liquid" type="checkbox" checked>Include in Free to Spend</label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Account</button></div>
 </form></dialog>
 
 <dialog id="incomeModal"><form id="incomeForm">
@@ -113,6 +117,17 @@
 
 <dialog id="transferModal"><form id="transferForm">
   <h3>Transfer</h3><label>From<select name="from" required></select></label><label>To<select name="to" required></select></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label><label>Date<input name="date" type="date" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Transfer</button></div>
+</form></dialog>
+
+
+<dialog id="adjustmentModal"><form id="adjustmentForm">
+  <h3>Add Existing Funds</h3>
+  <p class="muted small">Use this for money that was already in the account. It increases the account balance but is not counted as income for the pay cycle.</p>
+  <label>Account<select name="accountId" required></select></label>
+  <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label>
+  <label>Description<input name="description" required value="Existing balance" placeholder="Existing balance"></label>
+  <label>Date<input name="date" type="date" required></label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Add Existing Funds</button></div>
 </form></dialog>
 
 <dialog id="budgetModal"><form id="budgetForm">
@@ -153,7 +168,10 @@ function cycle(off=periodOffset){let b=currentBaseMonth(),nom=new Date(b.getFull
 function inCycle(s,c){let d=new Date(s+'T12:00:00');return d>=c.start&&d<=c.end}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function accountName(id){let a=state.accounts.find(x=>x.id===id);return a?a.name:'Unknown'}
-function balance(id){let a=state.accounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.opening||0);state.transactions.forEach(t=>{if(t.type==='income'&&t.accountId===id)v+=Number(t.amount);if(t.type==='expense'&&t.accountId===id)v-=Number(t.amount);if(t.type==='transfer'){if(t.from===id)v-=Number(t.amount);if(t.to===id)v+=Number(t.amount)}});return v}
+function balance(id){let a=state.accounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.opening||0);state.transactions.forEach(t=>{if(t.type==='income'&&t.accountId===id)v+=Number(t.amount);
+if(t.type==='adjustment'&&t.accountId===id)v+=Number(t.amount);
+if(t.type==='expense'&&t.accountId===id)v-=Number(t.amount);
+if(t.type==='transfer'){if(t.from===id)v-=Number(t.amount);if(t.to===id)v+=Number(t.amount)}});return v}
 function fmt(d){return d.toLocaleDateString('en-JM',{day:'numeric',month:'short',year:'numeric'})}
 function options(){
  let s=$('#periodSelect');s.innerHTML='';
@@ -182,7 +200,13 @@ function render(){
  let fundHtml=state.funds.length?state.funds.map(f=>`<div class="fund-row"><div><strong>${f.name}</strong><div class="tx-meta">${f.target?money.format(f.amount)+' of '+money.format(f.target):'Reserved savings'}</div></div><strong>${money.format(f.amount)}</strong></div>`).join(''):'<p class="muted">No savings funds yet.</p>';
  $('#fundsList').innerHTML=fundHtml;$('#planFundsList').innerHTML=fundHtml;
  let type=$('#typeFilter').value,q=$('#searchTx').value.toLowerCase(),rows=[...m.tx].filter(t=>(type==='all'||t.type===type)&&JSON.stringify(t).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
- $('#transactionsList').innerHTML=rows.length?rows.map(t=>`<div class="tx"><div><strong>${t.description||'Transfer'}</strong><div class="tx-meta">${t.date} • ${t.type==='transfer'?accountName(t.from)+' → '+accountName(t.to):accountName(t.accountId)}</div></div><strong class="${t.type==='income'?'positive':t.type==='expense'?'negative':''}">${t.type==='income'?'+':t.type==='expense'?'-':''}${money.format(t.amount)}</strong></div>`).join(''):'<p class="muted">No transactions in this period.</p>';
+ $('#transactionsList').innerHTML=rows.length?rows.map(t=>{
+ let title=t.description||'Transfer',meta=t.type==='transfer'?accountName(t.from)+' → '+accountName(t.to):accountName(t.accountId);
+ let sign=t.type==='income'||t.type==='adjustment'?'+':t.type==='expense'?'-':'';
+ let cls=t.type==='income'||t.type==='adjustment'?'positive':t.type==='expense'?'negative':'';
+ let typeLabel=t.type==='adjustment'?'Existing funds':t.type;
+ return `<div class="tx"><div><strong>${title}</strong><div class="tx-meta">${t.date} • ${typeLabel} • ${meta}</div></div><strong class="${cls}">${sign}${money.format(t.amount)}</strong></div>`
+}).join(''):'<p class="muted">No transactions in this period.</p>';
  $('#summaryMetrics').innerHTML=`<div class="metric"><span>Income</span><strong>${money.format(m.income)}</strong></div><div class="metric"><span>Spent</span><strong>${money.format(m.spent)}</strong></div><div class="metric"><span>Net Cash Flow</span><strong>${money.format(m.income-m.spent)}</strong></div><div class="metric"><span>Free to Spend</span><strong>${money.format(m.free)}</strong></div>`;
  let cats={};m.tx.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
  let max=Math.max(m.income,m.spent,1);$('#incomeBar').style.height=Math.max(3,m.income/max*100)+'%';$('#expenseBar').style.height=Math.max(3,m.spent/max*100)+'%';$('#incomeBarValue').textContent=money.format(m.income);$('#expenseBarValue').textContent=money.format(m.spent);$('#donutTotal').textContent=money.format(m.spent);
@@ -191,7 +215,7 @@ function render(){
 function open(id){let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');if(f){f.reset();d.querySelectorAll('input[type=date]').forEach(x=>x.value=todayIso())}if(d.showModal)d.showModal();else d.setAttribute('open','')}
 function closeDialog(el){let d=el.closest('dialog');if(d){if(d.close)d.close();else d.removeAttribute('open')}}
 document.addEventListener('click',e=>{
- let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
+ let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal','adjustmentModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
  let cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeDialog(cl);return}
  let pay=e.target.closest('[data-pay]');if(pay){let key=iso(cycle().start)+'|'+pay.dataset.pay;state.billPaid[key]=!state.billPaid[key];save();render();return}
  let tab=e.target.closest('[data-page]');if(tab){$$('.tab').forEach(x=>x.classList.remove('active'));$$('.page').forEach(x=>x.classList.remove('active'));tab.classList.add('active');$('#'+tab.dataset.page).classList.add('active');window.scrollTo(0,0)}
@@ -202,6 +226,21 @@ $('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);s
 $('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
 $('#expenseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'expense',description:f.get('description').trim(),category:f.get('category'),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
 $('#transferForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);if(f.get('from')===f.get('to')){alert('Choose different accounts.');return}state.transactions.push({id:uid(),type:'transfer',description:'Transfer',amount:Number(f.get('amount')),from:f.get('from'),to:f.get('to'),date:f.get('date')});save();closeDialog(e.target);render()};
+$('#adjustmentForm').onsubmit=e=>{
+  e.preventDefault();
+  let f=new FormData(e.target);
+  state.transactions.push({
+    id:uid(),
+    type:'adjustment',
+    description:f.get('description').trim()||'Existing balance',
+    amount:Number(f.get('amount')),
+    accountId:f.get('accountId'),
+    date:f.get('date')
+  });
+  save();
+  closeDialog(e.target);
+  render();
+};
 $('#budgetForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.budgets.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount'))});save();closeDialog(e.target);render()};
 $('#billForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.bills.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),dueDay:Number(f.get('dueDay'))});save();closeDialog(e.target);render()};
 $('#fundForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.funds.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),target:Number(f.get('target')||0)});save();closeDialog(e.target);render()};
