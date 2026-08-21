@@ -1,12 +1,12 @@
 {
-  "name": "PayCycle Budget UX V2",
-  "short_name": "PayCycle",
+  "name": "Khadijah's Budget",
+  "short_name": "Khadijah Budget",
   "description": "Offline-first payday-based personal budgeting app",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f1f5f9",
-  "theme_color": "#0f172a",
+  "background_color": "#fbfaf5",
+  "theme_color": "#006b4f",
   "icons": [
     {
       "src": "icons/icon-192.png",

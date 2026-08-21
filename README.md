@@ -1,6 +1,6 @@
-# PayCycle Budget — Full App
+# Khadijah's Budget
 
-PayCycle Budget is an offline-first personal finance PWA built around a payday cycle rather than a calendar month.
+Khadijah's Budget is an offline-first personal finance PWA built around a payday cycle rather than a calendar month.
 
 ## Included
 
@@ -53,7 +53,7 @@ python -m http.server 8000
 
 Then open:
 
-`http://localhost:8000/paycycle-budget-full/`
+`http://localhost:8000/khadijahs-budget/`
 
 ## Deploying to GitHub Pages
 
