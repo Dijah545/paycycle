@@ -203,3 +203,18 @@ input:focus,select:focus,textarea:focus{
     box-shadow:none;
   }
 }
+
+.period-center{display:grid;gap:3px}
+.period-rule{
+  display:block;
+  color:var(--kb-muted,#61736d);
+  font-size:.66rem;
+  font-weight:600;
+  line-height:1.25;
+  margin-top:2px;
+}
+#periodSelect{
+  cursor:pointer;
+  appearance:auto;
+  min-height:38px;
+}

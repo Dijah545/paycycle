@@ -19,11 +19,29 @@ let periodOffset=0;
 function selectedCycle(){return cycleFromOffset(periodOffset)}
 function cycleFromOffset(offset){
   const base=currentCycle(new Date(),state.settings.payday,state.settings);
-  if(offset===0)return base;
-  const anchor=new Date(base.start.getFullYear(),base.start.getMonth()+offset,15,12);
-  const start=adjustedPayday(anchor.getFullYear(),anchor.getMonth(),state.settings.payday,state.settings);
-  const next=adjustedPayday(start.getFullYear(),start.getMonth()+1,state.settings.payday,state.settings);
-  const end=new Date(next);end.setDate(end.getDate()-1);return{start,end,next};
+
+  // The cycle's start identifies the nominal payroll month.
+  // Move by calendar months from that nominal month, then recalculate
+  // the actual payday using weekends + Jamaican holidays.
+  const nominalMonth=new Date(base.start.getFullYear(),base.start.getMonth()+offset,1,12);
+  const start=adjustedPayday(
+    nominalMonth.getFullYear(),
+    nominalMonth.getMonth(),
+    state.settings.payday,
+    state.settings
+  );
+
+  const followingMonth=new Date(nominalMonth.getFullYear(),nominalMonth.getMonth()+1,1,12);
+  const next=adjustedPayday(
+    followingMonth.getFullYear(),
+    followingMonth.getMonth(),
+    state.settings.payday,
+    state.settings
+  );
+
+  const end=new Date(next);
+  end.setDate(end.getDate()-1);
+  return {start,end,next};
 }
 function accountBalance(id,asOf=null){
   const a=state.accounts.find(x=>x.id===id);if(!a)return 0;let bal=Number(a.openingBalance);
@@ -39,9 +57,24 @@ const budgetName=n=>state.budgets.some(b=>b.name===n)?n:(n||'Uncategorised');
 const debtTotal=()=>state.debts.reduce((s,d)=>s+Number(d.balance||0),0);
 
 function ensurePeriodOptions(){
-  $('#periodSelect').innerHTML=Array.from({length:31},(_,k)=>k-18).map(i=>{
-    const c=cycleFromOffset(i);return`<option value="${i}" ${i===periodOffset?'selected':''}>${fmtDate(c.start)} – ${fmtDate(c.end)}</option>`
-  }).join('');
+  const select=$('#periodSelect');
+  if(!select) return;
+
+  const options=[];
+  for(let i=-18;i<=12;i++){
+    const c=cycleFromOffset(i);
+    const prefix=i===0?'Current • ':'';
+    options.push({
+      value:i,
+      label:`${prefix}${fmtDate(c.start)} – ${fmtDate(c.end)}`
+    });
+  }
+
+  select.innerHTML=options.map(o =>
+    `<option value="${o.value}" ${o.value===periodOffset?'selected':''}>${o.label}</option>`
+  ).join('');
+
+  select.value=String(periodOffset);
 }
 function accountOptions(includeBlank=false){
   return `${includeBlank?'<option value="">Select account</option>':''}${state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('')}`;

@@ -74,3 +74,15 @@ Use **Settings → Export Full Backup** periodically, especially before clearing
 ## Holiday note
 
 The app contains a built-in Jamaica holiday calculator for standard public holidays and observed weekend handling. Manual holiday entries remain available so you can override payroll-specific situations or unusual official observance arrangements.
+
+## Budget period rule
+
+Budget periods are payday-to-payday, not calendar months.
+
+- Nominal payday: the 25th of each month.
+- If the 25th is a Saturday, Sunday, or Jamaican public holiday, payday moves backward one day at a time until the previous Jamaican business day.
+- A budget period starts on that adjusted payday.
+- It ends the day before the next adjusted payday.
+- The Home page period selector includes 18 previous cycles, the current cycle, and 12 future cycles.
+
+Example: if a future 25th is a Sunday, the cycle begins on Friday the 23rd (unless Friday is also a holiday, in which case it moves back again).
