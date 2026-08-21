@@ -22,11 +22,11 @@
   </header>
 
   <nav class="tabs" aria-label="Main navigation">
-    <button class="tab active" data-tab="dashboard">Dashboard</button>
-    <button class="tab" data-tab="transactions">Transactions</button>
-    <button class="tab" data-tab="planning">Planning</button>
-    <button class="tab" data-tab="reports">Reports</button>
-    <button class="tab" data-tab="settings">Settings</button>
+    <button class="tab active" data-tab="dashboard"><span class="nav-icon">⌂</span><span>Home</span></button>
+    <button class="tab" data-tab="transactions"><span class="nav-icon">↕</span><span>Activity</span></button>
+    <button class="tab" data-tab="planning"><span class="nav-icon">◎</span><span>Plan</span></button>
+    <button class="tab" data-tab="reports"><span class="nav-icon">▥</span><span>Insights</span></button>
+    <button class="tab" data-tab="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
   </nav>
 
   <main>
@@ -53,8 +53,37 @@
         <article class="card accent"><span>Free to Spend</span><strong id="freeToSpend">$0</strong><small>Liquid balances less unpaid bills and reserved funds</small></article>
       </section>
 
+      <section class="dashboard-charts">
+        <article class="card chart-card">
+          <div class="section-title">
+            <div><p class="eyebrow">CASH FLOW</p><h2>Income vs Spending</h2></div>
+            <span id="cashFlowStatus" class="status-chip">This period</span>
+          </div>
+          <div class="bar-chart" aria-label="Income versus spending">
+            <div class="bar-column">
+              <div class="bar-track"><div id="incomeBar" class="bar-fill income-bar"></div></div>
+              <strong id="incomeBarValue">$0</strong><span>Income</span>
+            </div>
+            <div class="bar-column">
+              <div class="bar-track"><div id="expenseBar" class="bar-fill expense-bar"></div></div>
+              <strong id="expenseBarValue">$0</strong><span>Spent</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card chart-card">
+          <div class="section-title">
+            <div><p class="eyebrow">BUDGET HEALTH</p><h2>Where Your Money Went</h2></div>
+          </div>
+          <div class="donut-layout">
+            <div id="spendDonut" class="donut"><div class="donut-center"><strong id="donutTotal">$0</strong><span>spent</span></div></div>
+            <div id="donutLegend" class="chart-legend"></div>
+          </div>
+        </article>
+      </section>
+
       <section class="card">
-        <div class="section-title"><h2>Accounts</h2><button data-open="accountModal">+ Account</button></div>
+        <div class="section-title"><div><p class="eyebrow">MONEY</p><h2>Accounts</h2></div><button data-open="accountModal">+ Account</button></div>
         <div id="accountsList" class="list"></div>
       </section>
 
@@ -78,6 +107,11 @@
       <section class="card">
         <div class="section-title"><h2>Savings & Sinking Funds</h2><button data-open="fundModal">+ Fund</button></div>
         <div id="fundsList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><div><p class="eyebrow">RECENT</p><h2>Latest Activity</h2></div><button id="viewAllTransactions" class="secondary">View all</button></div>
+        <div id="recentTransactions" class="list"></div>
       </section>
     </section>
 
