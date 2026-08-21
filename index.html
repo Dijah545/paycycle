@@ -3,142 +3,197 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PayCycle Budget</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header class="app-header">
     <div>
-      <p class="eyebrow">PERSONAL FINANCE</p>
+      <p class="eyebrow">OFFLINE PERSONAL FINANCE</p>
       <h1>PayCycle Budget</h1>
+      <p class="muted small">Budget around your payday, not the calendar month.</p>
     </div>
     <button id="installBtn" class="secondary hidden">Install</button>
   </header>
 
+  <nav class="tabs" aria-label="Main navigation">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="transactions">Transactions</button>
+    <button class="tab" data-tab="planning">Planning</button>
+    <button class="tab" data-tab="reports">Reports</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </nav>
+
   <main>
-    <section class="period-bar card">
-      <button id="prevPeriodBtn" class="secondary icon-btn">‹</button>
-      <div class="period-center">
-        <span class="muted small">Budget Period</span>
-        <select id="periodSelect"></select>
-      </div>
-      <button id="nextPeriodBtn" class="secondary icon-btn">›</button>
+    <section id="dashboard" class="tab-panel active">
+      <section class="period-bar card">
+        <button id="prevPeriodBtn" class="secondary icon-btn" aria-label="Previous period">‹</button>
+        <div class="period-center">
+          <span class="muted small">Budget Period</span>
+          <select id="periodSelect" aria-label="Budget period"></select>
+        </div>
+        <button id="nextPeriodBtn" class="secondary icon-btn" aria-label="Next period">›</button>
+      </section>
+
+      <section class="summary-grid">
+        <article class="card hero">
+          <span>Total Financial Position</span>
+          <strong id="totalPosition">$0</strong>
+          <small>Current balances across asset accounts less debt balances</small>
+        </article>
+        <article class="card"><span>Income This Period</span><strong id="incomeCycle">$0</strong></article>
+        <article class="card"><span>Spent This Period</span><strong id="spentCycle">$0</strong></article>
+        <article class="card"><span>Unpaid Commitments</span><strong id="commitmentsTotal">$0</strong></article>
+        <article class="card"><span>Reserved Savings</span><strong id="reservedSavings">$0</strong></article>
+        <article class="card accent"><span>Free to Spend</span><strong id="freeToSpend">$0</strong><small>Liquid balances less unpaid bills and reserved funds</small></article>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Accounts</h2><button data-open="accountModal">+ Account</button></div>
+        <div id="accountsList" class="list"></div>
+      </section>
+
+      <section class="quick-actions">
+        <button data-open="incomeModal">+ Income</button>
+        <button data-open="expenseModal">− Expense</button>
+        <button data-open="transferModal">⇄ Transfer</button>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Budget Categories</h2><button data-open="budgetModal">+ Budget</button></div>
+        <div id="budgetList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Recurring Commitments</h2><button data-open="commitmentModal">+ Bill</button></div>
+        <p class="small muted">Paying a bill can automatically create the matching expense transaction.</p>
+        <div id="commitmentsList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Savings & Sinking Funds</h2><button data-open="fundModal">+ Fund</button></div>
+        <div id="fundsList" class="list"></div>
+      </section>
     </section>
 
-    <section class="summary-grid">
-      <article class="card hero">
-        <span>Total Financial Position</span>
-        <strong id="totalPosition">$0</strong>
-        <small>Current balances across all accounts</small>
-      </article>
-      <article class="card">
-        <span>Income This Period</span>
-        <strong id="incomeCycle">$0</strong>
-      </article>
-      <article class="card">
-        <span>Spent This Period</span>
-        <strong id="spentCycle">$0</strong>
-      </article>
-      <article class="card">
-        <span>Unpaid Commitments</span>
-        <strong id="commitmentsTotal">$0</strong>
-      </article>
-      <article class="card">
-        <span>Reserved Savings</span>
-        <strong id="reservedSavings">$0</strong>
-      </article>
-      <article class="card accent">
-        <span>Free to Spend</span>
-        <strong id="freeToSpend">$0</strong>
-        <small>Current cash less unpaid bills and reserved funds</small>
-      </article>
+    <section id="transactions" class="tab-panel">
+      <section class="card">
+        <div class="section-title"><h2>Transactions</h2>
+          <div class="item-actions"><button data-open="incomeModal">+ Income</button><button data-open="expenseModal">− Expense</button></div>
+        </div>
+        <div class="filters">
+          <select id="txTypeFilter">
+            <option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option><option value="transfer">Transfers</option>
+          </select>
+          <select id="txAccountFilter"><option value="all">All accounts</option></select>
+          <input id="txSearch" type="search" placeholder="Search transactions">
+        </div>
+        <div id="transactionsList" class="list"></div>
+      </section>
     </section>
 
-    <section class="card">
-      <div class="section-title">
-        <h2>Accounts</h2>
-        <button data-open="accountModal">+ Account</button>
-      </div>
-      <div id="accountsList" class="list"></div>
+    <section id="planning" class="tab-panel">
+      <section class="card">
+        <div class="section-title"><h2>Planned Income</h2><button data-open="plannedIncomeModal">+ Planned Income</button></div>
+        <p class="small muted">Forecast money you expect to receive. Planned income does not change an account balance until recorded as received.</p>
+        <div id="plannedIncomeList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Debt & Credit</h2><button data-open="debtModal">+ Debt</button></div>
+        <div id="debtsList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Recurring Commitments</h2><button data-open="commitmentModal">+ Bill</button></div>
+        <div id="planningCommitmentsList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Savings Funds</h2><button data-open="fundModal">+ Fund</button></div>
+        <div id="planningFundsList" class="list"></div>
+      </section>
     </section>
 
-    <section class="actions">
-      <button data-open="incomeModal">+ Income</button>
-      <button data-open="expenseModal">− Expense</button>
-      <button data-open="transferModal">⇄ Transfer</button>
+    <section id="reports" class="tab-panel">
+      <section class="card">
+        <div class="section-title"><h2>Selected Period Summary</h2></div>
+        <div id="reportSummary" class="report-grid"></div>
+      </section>
+      <section class="card">
+        <div class="section-title"><h2>Spending by Category</h2></div>
+        <div id="categoryReport" class="list"></div>
+      </section>
+      <section class="card">
+        <div class="section-title"><h2>Spending by Account</h2></div>
+        <div id="accountReport" class="list"></div>
+      </section>
+      <section class="card">
+        <div class="section-title"><h2>Exports</h2></div>
+        <div class="row wrap">
+          <button id="exportCsvBtn">Export Transactions CSV</button>
+          <button id="exportSummaryCsvBtn" class="secondary">Export Period Summary CSV</button>
+        </div>
+      </section>
     </section>
 
-    <section class="card">
-      <div class="section-title">
-        <h2>Budget Categories</h2>
-        <button data-open="budgetModal">+ Budget</button>
-      </div>
-      <div id="budgetList" class="list"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-title">
-        <h2>Recurring Commitments</h2>
-        <button data-open="commitmentModal">+ Bill</button>
-      </div>
-      <p class="small muted">Mark a bill paid for each selected pay period. Paid bills stop reducing Free to Spend.</p>
-      <div id="commitmentsList" class="list"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-title">
-        <h2>Savings & Sinking Funds</h2>
-        <button data-open="fundModal">+ Fund</button>
-      </div>
-      <div id="fundsList" class="list"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-title"><h2>Transactions in Selected Period</h2></div>
-      <div id="transactionsList" class="list"></div>
-    </section>
-
-    <section class="card">
-      <div class="section-title"><h2>Pay Cycle Settings</h2></div>
-      <label>Nominal payday
-        <input id="paydayInput" type="number" min="1" max="28" value="25">
-      </label>
-      <label class="inline-check">
-        <input id="jamaicaHolidayToggle" type="checkbox">
-        Automatically include Jamaican public holidays
-      </label>
-      <p class="small muted">If the nominal payday falls on a weekend or recognised holiday, the app moves it backward until it reaches a business day.</p>
-      <label>Additional/manual holiday dates, one per line (YYYY-MM-DD)
-        <textarea id="holidayInput" rows="4"></textarea>
-      </label>
-      <div id="holidayPreview" class="holiday-preview"></div>
-      <div class="row wrap">
+    <section id="settings" class="tab-panel">
+      <section class="card">
+        <div class="section-title"><h2>Pay Cycle Settings</h2></div>
+        <label>Nominal payday
+          <input id="paydayInput" type="number" min="1" max="28" value="25">
+        </label>
+        <label class="inline-check">
+          <input id="jamaicaHolidayToggle" type="checkbox">
+          Automatically include Jamaican public holidays
+        </label>
+        <p class="small muted">If the nominal payday falls on a weekend or holiday, the cycle begins on the prior business day.</p>
+        <label>Additional/manual holiday dates, one per line (YYYY-MM-DD)
+          <textarea id="holidayInput" rows="4"></textarea>
+        </label>
+        <div id="holidayPreview" class="holiday-preview"></div>
         <button id="saveSettingsBtn">Save settings</button>
-        <button id="exportBtn" class="secondary">Export backup</button>
-        <label class="file-button secondary">Restore backup<input id="importInput" type="file" accept="application/json"></label>
-      </div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>Data & Backup</h2></div>
+        <p class="small muted">Your financial records are stored locally on this device/browser. Back up regularly.</p>
+        <div class="row wrap">
+          <button id="exportBtn">Export Full Backup</button>
+          <label class="file-button secondary">Restore Backup<input id="importInput" type="file" accept="application/json"></label>
+          <button id="resetBtn" class="danger">Reset App Data</button>
+        </div>
+      </section>
     </section>
   </main>
 
+  <!-- Account -->
   <dialog id="accountModal"><form method="dialog" id="accountForm">
-    <h3 id="accountModalTitle">Add Account</h3>
-    <input type="hidden" name="id">
+    <h3 id="accountModalTitle">Add Account</h3><input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="JN Bank"></label>
+    <label>Type<select name="type"><option value="bank">Bank</option><option value="savings">Savings</option><option value="cash">Cash</option><option value="wallet">Wallet</option></select></label>
     <label>Opening balance<input name="balance" required type="number" step="0.01" placeholder="0"></label>
+    <label class="inline-check"><input name="liquid" type="checkbox" checked>Include in Free to Spend calculation</label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Income -->
   <dialog id="incomeModal"><form method="dialog" id="incomeForm">
     <h3>Add Income</h3>
     <label>Source<input name="description" required placeholder="Salary"></label>
     <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
     <label>Deposit to<select name="accountId" required></select></label>
     <label>Date<input name="date" required type="date"></label>
+    <label>Notes<textarea name="notes" rows="2"></textarea></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Expense -->
   <dialog id="expenseModal"><form method="dialog" id="expenseForm">
     <h3>Add Expense</h3>
     <label>Description<input name="description" required placeholder="Groceries"></label>
@@ -146,47 +201,82 @@
     <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
     <label>Paid from<select name="accountId" required></select></label>
     <label>Date<input name="date" required type="date"></label>
+    <label>Notes<textarea name="notes" rows="2"></textarea></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Transfer -->
   <dialog id="transferModal"><form method="dialog" id="transferForm">
     <h3>Transfer</h3>
     <label>From<select name="fromAccountId" required></select></label>
     <label>To<select name="toAccountId" required></select></label>
     <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
     <label>Date<input name="date" required type="date"></label>
+    <label>Notes<textarea name="notes" rows="2"></textarea></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Budget -->
   <dialog id="budgetModal"><form method="dialog" id="budgetForm">
-    <h3 id="budgetModalTitle">Add Budget Category</h3>
-    <input type="hidden" name="id">
+    <h3 id="budgetModalTitle">Add Budget Category</h3><input type="hidden" name="id">
     <label>Category<input name="name" required placeholder="Groceries"></label>
-    <label>Budget for each pay period<input name="amount" required type="number" min="0" step="0.01"></label>
+    <label>Budget per pay period<input name="amount" required type="number" min="0" step="0.01"></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Bill -->
   <dialog id="commitmentModal"><form method="dialog" id="commitmentForm">
-    <h3 id="commitmentModalTitle">Add Recurring Commitment</h3>
-    <input type="hidden" name="id">
+    <h3 id="commitmentModalTitle">Add Recurring Commitment</h3><input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="Internet"></label>
     <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
     <label>Due day<input name="dueDay" required type="number" min="1" max="31"></label>
+    <label>Expense category<select name="category" id="commitmentCategory"></select></label>
+    <label>Default payment account<select name="accountId"></select></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Pay bill -->
+  <dialog id="payBillModal"><form method="dialog" id="payBillForm">
+    <h3>Pay Bill</h3><input type="hidden" name="commitmentId">
+    <p id="payBillName" class="muted"></p>
+    <label>Amount paid<input name="amount" required type="number" min="0.01" step="0.01"></label>
+    <label>Paid from<select name="accountId" required></select></label>
+    <label>Date<input name="date" required type="date"></label>
+    <label class="inline-check"><input name="createExpense" type="checkbox" checked>Create expense transaction</label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Mark Paid</button></div>
+  </form></dialog>
+
+  <!-- Fund -->
   <dialog id="fundModal"><form method="dialog" id="fundForm">
-    <h3 id="fundModalTitle">Add Savings Fund</h3>
-    <input type="hidden" name="id">
+    <h3 id="fundModalTitle">Add Savings Fund</h3><input type="hidden" name="id">
     <label>Name<input name="name" required placeholder="Emergency Fund"></label>
     <label>Reserved amount<input name="amount" required type="number" min="0" step="0.01"></label>
+    <label>Target amount<input name="target" type="number" min="0" step="0.01" placeholder="Optional"></label>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
   </form></dialog>
 
+  <!-- Planned income -->
+  <dialog id="plannedIncomeModal"><form method="dialog" id="plannedIncomeForm">
+    <h3 id="plannedIncomeModalTitle">Add Planned Income</h3><input type="hidden" name="id">
+    <label>Source<input name="description" required placeholder="Salary"></label>
+    <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
+    <label>Expected day of pay cycle<input name="dayOffset" type="number" min="0" max="31" value="0"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <!-- Debt -->
+  <dialog id="debtModal"><form method="dialog" id="debtForm">
+    <h3 id="debtModalTitle">Add Debt</h3><input type="hidden" name="id">
+    <label>Name<input name="name" required placeholder="Credit Card"></label>
+    <label>Current balance<input name="balance" required type="number" min="0" step="0.01"></label>
+    <label>Minimum payment<input name="minimumPayment" type="number" min="0" step="0.01"></label>
+    <label>Due day<input name="dueDay" type="number" min="1" max="31"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <!-- Transaction editor -->
   <dialog id="editModal"><form method="dialog" id="editForm">
-    <h3>Edit Transaction</h3>
-    <input type="hidden" name="id">
-    <div id="editFields"></div>
+    <h3>Edit Transaction</h3><input type="hidden" name="id"><div id="editFields"></div>
     <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save Changes</button></div>
   </form></dialog>
 

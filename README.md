@@ -1,30 +1,76 @@
-# PayCycle Budget V1.2
+# PayCycle Budget — Full App
 
-## New in V1.2
-- Paid/unpaid status for recurring bills, stored separately for each pay period
-- Free-to-Spend now subtracts only unpaid commitments
-- Edit accounts and opening balances
-- Edit budget categories and limits
-- Renaming a budget category updates existing categorized expense records
-- Edit recurring commitments
-- Edit savings/sinking funds
-- Automatic Jamaican holiday calendar option
-- Manual holiday dates remain available as overrides/additions
-- Holiday preview for the selected cycle's year
-- V1.1 budget-period navigation, transaction tracking, offline use, backups and PWA installation retained
+PayCycle Budget is an offline-first personal finance PWA built around a payday cycle rather than a calendar month.
 
-## Important holiday note
-The built-in calendar covers the standard Jamaican public-holiday pattern and provides weekend observation handling for budgeting calculations. Because payroll treatment or official observed dates can sometimes differ, manual holiday dates remain available and should be used when needed.
+## Included
 
-## Data
-All personal finance data stays in your browser's IndexedDB database. Nothing is committed to GitHub.
+- Multiple bank, savings, cash and wallet accounts
+- Opening balances and live account balances
+- Income, expenses and transfers
+- Transfers do not inflate income or spending
+- Budget categories with per-pay-period limits
+- Selectable historical and future budget periods
+- Payday defaults to the 25th
+- Weekend/holiday payday adjustment
+- Automatic Jamaican public-holiday calculations plus manual overrides
+- Recurring bills and commitments
+- Pay Bill workflow that can automatically create the expense transaction
+- Paid/unpaid status tracked independently for each pay cycle
+- Savings and sinking funds with optional targets
+- Planned/forecast income
+- Debt and credit-card balance tracking
+- Net financial position
+- Liquid Free-to-Spend calculation
+- Transaction filtering and searching
+- Selected-period reports
+- Spending by category
+- Spending by account
+- CSV exports
+- Full JSON backup/restore
+- Offline IndexedDB storage
+- PWA installation on supported phones/browsers
+- No financial data is stored in GitHub
 
-## Run locally
+## Core calculations
+
+**Net Financial Position**
+= all account balances - debt balances
+
+**Free to Spend**
+= balances in accounts marked "Include in Free to Spend"
+- unpaid recurring commitments in the selected period
+- reserved savings/sinking funds
+
+## Running locally
+
+Service workers require HTTP/HTTPS rather than `file://`.
+
+From the directory above this project:
+
 ```bash
 python -m http.server 8000
 ```
 
-Then browse to the folder via localhost. Service workers do not operate from file://.
+Then open:
 
-## GitHub Pages
-Upload the contents of this folder to the root of a GitHub repository and enable GitHub Pages from the main branch/root.
+`http://localhost:8000/paycycle-budget-full/`
+
+## Deploying to GitHub Pages
+
+1. Create a new GitHub repository.
+2. Upload the contents of this folder into the repository root.
+3. Open repository **Settings → Pages**.
+4. Under Build and deployment, select **Deploy from a branch**.
+5. Select `main` and `/ (root)`.
+6. Open the GitHub Pages URL once deployment completes.
+7. On your phone, open the site and add it to your Home Screen.
+
+## Data safety
+
+The app itself can be public on GitHub Pages, but your financial data stays inside your device/browser via IndexedDB. It is not written to your GitHub repository.
+
+Use **Settings → Export Full Backup** periodically, especially before clearing browser data, changing phones, or reinstalling the app.
+
+## Holiday note
+
+The app contains a built-in Jamaica holiday calculator for standard public holidays and observed weekend handling. Manual holiday entries remain available so you can override payroll-specific situations or unusual official observance arrangements.
