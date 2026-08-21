@@ -13,10 +13,13 @@
 </head>
 <body>
   <header class="app-header">
-    <div>
-      <p class="eyebrow">OFFLINE PERSONAL FINANCE</p>
-      <h1>PayCycle Budget</h1>
-      <p class="muted small">Budget around your payday, not the calendar month.</p>
+    <div class="brand-block">
+      <div class="brand-mark">P</div>
+      <div>
+        <p class="eyebrow">PAYDAY-BASED BUDGETING</p>
+        <h1>PayCycle</h1>
+        <p class="muted small">Know what is safe to spend before your next payday.</p>
+      </div>
     </div>
     <button id="installBtn" class="secondary hidden">Install</button>
   </header>
@@ -40,26 +43,34 @@
         <button id="nextPeriodBtn" class="secondary icon-btn" aria-label="Next period">›</button>
       </section>
 
-      <section class="summary-grid">
-        <article class="card hero">
-          <span>Total Financial Position</span>
-          <strong id="totalPosition">$0</strong>
-          <small>Current balances across asset accounts less debt balances</small>
+      <section class="money-hero">
+        <article class="free-card">
+          <div>
+            <p class="eyebrow light">AVAILABLE NOW</p>
+            <span>Free to Spend</span>
+            <strong id="freeToSpend">$0</strong>
+            <small>After unpaid bills and reserved savings</small>
+          </div>
+          <div class="payday-badge">
+            <span>Selected cycle</span>
+            <strong id="cycleMiniLabel">—</strong>
+          </div>
         </article>
-        <article class="card"><span>Income This Period</span><strong id="incomeCycle">$0</strong></article>
-        <article class="card"><span>Spent This Period</span><strong id="spentCycle">$0</strong></article>
-        <article class="card"><span>Unpaid Commitments</span><strong id="commitmentsTotal">$0</strong></article>
-        <article class="card"><span>Reserved Savings</span><strong id="reservedSavings">$0</strong></article>
-        <article class="card accent"><span>Free to Spend</span><strong id="freeToSpend">$0</strong><small>Liquid balances less unpaid bills and reserved funds</small></article>
+        <div class="metric-strip">
+          <article><span>Total Position</span><strong id="totalPosition">$0</strong></article>
+          <article><span>Income</span><strong id="incomeCycle">$0</strong></article>
+          <article><span>Spent</span><strong id="spentCycle">$0</strong></article>
+          <article><span>Unpaid Bills</span><strong id="commitmentsTotal">$0</strong></article>
+          <article><span>Reserved</span><strong id="reservedSavings">$0</strong></article>
+        </div>
       </section>
-
       <section class="dashboard-charts">
         <article class="card chart-card">
           <div class="section-title">
             <div><p class="eyebrow">CASH FLOW</p><h2>Income vs Spending</h2></div>
             <span id="cashFlowStatus" class="status-chip">This period</span>
           </div>
-          <div class="bar-chart" aria-label="Income versus spending">
+          <div class="bar-chart">
             <div class="bar-column">
               <div class="bar-track"><div id="incomeBar" class="bar-fill income-bar"></div></div>
               <strong id="incomeBarValue">$0</strong><span>Income</span>
@@ -70,7 +81,6 @@
             </div>
           </div>
         </article>
-
         <article class="card chart-card">
           <div class="section-title">
             <div><p class="eyebrow">BUDGET HEALTH</p><h2>Where Your Money Went</h2></div>
@@ -83,14 +93,14 @@
       </section>
 
       <section class="card">
-        <div class="section-title"><div><p class="eyebrow">MONEY</p><h2>Accounts</h2></div><button data-open="accountModal">+ Account</button></div>
+        <div class="section-title"><h2>Accounts</h2><button data-open="accountModal">+ Account</button></div>
         <div id="accountsList" class="list"></div>
       </section>
 
-      <section class="quick-actions">
-        <button data-open="incomeModal">+ Income</button>
-        <button data-open="expenseModal">− Expense</button>
-        <button data-open="transferModal">⇄ Transfer</button>
+      <section class="quick-actions action-cards">
+        <button data-open="incomeModal"><span class="action-icon">＋</span><span><strong>Income</strong><small>Add money received</small></span></button>
+        <button data-open="expenseModal"><span class="action-icon">−</span><span><strong>Expense</strong><small>Record spending</small></span></button>
+        <button data-open="transferModal"><span class="action-icon">⇄</span><span><strong>Transfer</strong><small>Move between accounts</small></span></button>
       </section>
 
       <section class="card">
@@ -108,7 +118,6 @@
         <div class="section-title"><h2>Savings & Sinking Funds</h2><button data-open="fundModal">+ Fund</button></div>
         <div id="fundsList" class="list"></div>
       </section>
-
       <section class="card">
         <div class="section-title"><div><p class="eyebrow">RECENT</p><h2>Latest Activity</h2></div><button id="viewAllTransactions" class="secondary">View all</button></div>
         <div id="recentTransactions" class="list"></div>

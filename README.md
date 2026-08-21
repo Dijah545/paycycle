@@ -2,17 +2,6 @@
 
 PayCycle Budget is an offline-first personal finance PWA built around a payday cycle rather than a calendar month.
 
-## UX / navigation
-
-The app now uses five distinct app pages:
-- Home — financial snapshot, cash-flow graph, spending donut, accounts, budgets, bills, savings and recent activity
-- Activity — searchable/filterable transaction history
-- Plan — planned income, debts, recurring commitments and savings funds
-- Insights — period metrics and detailed spending reports
-- Settings — pay-cycle, holidays, backup and data controls
-
-On phones these pages use a fixed bottom navigation bar, similar to a native finance app.
-
 ## Included
 
 - Multiple bank, savings, cash and wallet accounts

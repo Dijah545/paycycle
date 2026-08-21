@@ -84,6 +84,7 @@ function currentMetrics(){
 }
 function render(){
   ensurePeriodOptions();fillSelects();const m=currentMetrics();
+  $('#cycleMiniLabel').textContent=`${fmtDate(m.cycle.start)} – ${fmtDate(m.cycle.end)}`;
   $('#totalPosition').textContent=currency.format(m.net);$('#incomeCycle').textContent=currency.format(m.income);$('#spentCycle').textContent=currency.format(m.spent);
   $('#commitmentsTotal').textContent=currency.format(m.unpaidTotal);$('#reservedSavings').textContent=currency.format(m.reserved);$('#freeToSpend').textContent=currency.format(m.free);
 
@@ -128,8 +129,33 @@ function render(){
   <div class="item-actions"><strong class="negative">${currency.format(d.balance)}</strong><button class="mini secondary" data-edit-debt="${d.id}">Edit</button><button class="mini danger" data-delete-debt="${d.id}">Delete</button></div></div>`).join('')
   :'<p class="muted">Track credit cards, loans, and other balances you owe.</p>';
 
-  renderTransactions(m);renderReports(m);renderSettings(m);attachDynamicHandlers();
+  renderDashboardCharts(m);renderRecentTransactions(m);renderTransactions(m);renderReports(m);renderSettings(m);attachDynamicHandlers();
 }
+
+function renderDashboardCharts(m){
+  const max=Math.max(m.income,m.spent,1);
+  $('#incomeBar').style.height=`${Math.max(3,(m.income/max)*100)}%`;
+  $('#expenseBar').style.height=`${Math.max(3,(m.spent/max)*100)}%`;
+  $('#incomeBarValue').textContent=currency.format(m.income);
+  $('#expenseBarValue').textContent=currency.format(m.spent);
+  const net=m.income-m.spent;
+  $('#cashFlowStatus').textContent=net>=0?`${currency.format(net)} ahead`:`${currency.format(Math.abs(net))} over`;
+  const cats={};
+  m.cyc.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]),total=entries.reduce((s,x)=>s+x[1],0);
+  $('#donutTotal').textContent=currency.format(total);
+  const palette=['#0f172a','#475569','#64748b','#94a3b8','#cbd5e1','#e2e8f0'];
+  if(!total){$('#spendDonut').style.background='#e2e8f0';$('#donutLegend').innerHTML='<p class="muted small">No expenses in this period yet.</p>';return}
+  let cursor=0,parts=[],legend=[];
+  entries.slice(0,6).forEach(([name,value],i)=>{const pct=value/total*100,end=cursor+pct,color=palette[i%palette.length];parts.push(`${color} ${cursor}% ${end}%`);cursor=end;legend.push(`<div class="legend-item"><i class="legend-dot" style="background:${color}"></i><span>${esc(name)}</span><strong>${Math.round(pct)}%</strong></div>`)});
+  $('#spendDonut').style.background=`conic-gradient(${parts.join(',')})`;
+  $('#donutLegend').innerHTML=legend.join('');
+}
+function renderRecentTransactions(m){
+  const rows=[...m.cyc].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  $('#recentTransactions').innerHTML=rows.length?rows.map(t=>{let title='',meta='',amt='',cls='';if(t.type==='income'){title=t.description;meta=`Income → ${accountName(t.accountId)}`;amt='+'+currency.format(t.amount);cls='positive'}if(t.type==='expense'){title=t.description;meta=`${budgetName(t.category)} • ${accountName(t.accountId)}`;amt='−'+currency.format(t.amount);cls='negative'}if(t.type==='transfer'){title='Transfer';meta=`${accountName(t.fromAccountId)} → ${accountName(t.toAccountId)}`;amt=currency.format(t.amount)}return`<div class="tx"><div><strong>${esc(title)}</strong><div class="tx-meta">${esc(meta)} • ${esc(t.date)}</div></div><strong class="${cls}">${amt}</strong></div>`}).join(''):'<p class="muted">No activity in this period yet.</p>';
+}
+
 function renderTransactions(m){
   let rows=[...m.cyc];
   const tf=$('#txTypeFilter').value,af=$('#txAccountFilter').value,q=$('#txSearch').value.trim().toLowerCase();
@@ -168,6 +194,11 @@ async function commit(){await saveState(state);render()}
 function resetForm(f){f.reset();f.querySelectorAll('input[type=hidden]').forEach(i=>i.value='')}
 
 $$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.remove('active'));$$('.tab-panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
+$('#viewAllTransactions').onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='transactions'));
+  $$('.tab-panel').forEach(x=>x.classList.toggle('active',x.id==='transactions'));
+  window.scrollTo({top:0,behavior:'smooth'});
+};
 $('#periodSelect').onchange=e=>{periodOffset=Number(e.target.value);render()};$('#prevPeriodBtn').onclick=()=>{periodOffset=Math.max(-18,periodOffset-1);render()};$('#nextPeriodBtn').onclick=()=>{periodOffset=Math.min(12,periodOffset+1);render()};
 $('#txTypeFilter').onchange=render;$('#txAccountFilter').onchange=render;$('#txSearch').oninput=render;
 
