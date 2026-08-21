@@ -13,24 +13,45 @@
     <div>
       <p class="eyebrow">PERSONAL FINANCE</p>
       <h1>PayCycle Budget</h1>
-      <p id="cycleLabel" class="muted"></p>
     </div>
     <button id="installBtn" class="secondary hidden">Install</button>
   </header>
 
   <main>
+    <section class="period-bar card">
+      <button id="prevPeriodBtn" class="secondary icon-btn">‹</button>
+      <div class="period-center">
+        <span class="muted small">Budget Period</span>
+        <select id="periodSelect"></select>
+      </div>
+      <button id="nextPeriodBtn" class="secondary icon-btn">›</button>
+    </section>
+
     <section class="summary-grid">
       <article class="card hero">
         <span>Total Financial Position</span>
         <strong id="totalPosition">$0</strong>
+        <small>Current balances across all accounts</small>
       </article>
       <article class="card">
-        <span>Income This Cycle</span>
+        <span>Income This Period</span>
         <strong id="incomeCycle">$0</strong>
       </article>
       <article class="card">
-        <span>Spent This Cycle</span>
+        <span>Spent This Period</span>
         <strong id="spentCycle">$0</strong>
+      </article>
+      <article class="card">
+        <span>Upcoming Commitments</span>
+        <strong id="commitmentsTotal">$0</strong>
+      </article>
+      <article class="card">
+        <span>Reserved Savings</span>
+        <strong id="reservedSavings">$0</strong>
+      </article>
+      <article class="card accent">
+        <span>Free to Spend</span>
+        <strong id="freeToSpend">$0</strong>
       </article>
     </section>
 
@@ -50,87 +71,115 @@
 
     <section class="card">
       <div class="section-title">
-        <h2>Recent Activity</h2>
+        <h2>Budget Categories</h2>
+        <button data-open="budgetModal">+ Budget</button>
+      </div>
+      <div id="budgetList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Recurring Commitments</h2>
+        <button data-open="commitmentModal">+ Bill</button>
+      </div>
+      <div id="commitmentsList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Savings & Sinking Funds</h2>
+        <button data-open="fundModal">+ Fund</button>
+      </div>
+      <div id="fundsList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Transactions in Selected Period</h2>
       </div>
       <div id="transactionsList" class="list"></div>
     </section>
 
     <section class="card">
-      <div class="section-title">
-        <h2>Pay Cycle Settings</h2>
-      </div>
+      <div class="section-title"><h2>Pay Cycle Settings</h2></div>
       <label>Nominal payday
         <input id="paydayInput" type="number" min="1" max="28" value="25">
       </label>
-      <p class="small muted">If the payday lands on a weekend or a holiday entered below, the app moves it backward to the previous business day.</p>
+      <p class="small muted">Weekend/holiday paydays move backward to the prior business day.</p>
       <label>Holiday dates, one per line (YYYY-MM-DD)
-        <textarea id="holidayInput" rows="5" placeholder="2026-12-25&#10;2026-12-26"></textarea>
+        <textarea id="holidayInput" rows="5"></textarea>
       </label>
-      <div class="row">
+      <div class="row wrap">
         <button id="saveSettingsBtn">Save settings</button>
         <button id="exportBtn" class="secondary">Export backup</button>
-        <label class="file-button secondary">
-          Restore backup
-          <input id="importInput" type="file" accept="application/json">
-        </label>
+        <label class="file-button secondary">Restore backup<input id="importInput" type="file" accept="application/json"></label>
       </div>
     </section>
   </main>
 
-  <dialog id="accountModal">
-    <form method="dialog" id="accountForm">
-      <h3>Add Account</h3>
-      <label>Name<input name="name" required placeholder="JN Bank"></label>
-      <label>Opening balance<input name="balance" required type="number" step="0.01" placeholder="0"></label>
-      <div class="row">
-        <button value="cancel" class="secondary">Cancel</button>
-        <button value="default" id="saveAccountBtn">Save</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="accountModal"><form method="dialog" id="accountForm">
+    <h3>Add Account</h3>
+    <label>Name<input name="name" required placeholder="JN Bank"></label>
+    <label>Opening balance<input name="balance" required type="number" step="0.01" placeholder="0"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
 
-  <dialog id="incomeModal">
-    <form method="dialog" id="incomeForm">
-      <h3>Add Income</h3>
-      <label>Source<input name="description" required placeholder="Salary"></label>
-      <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-      <label>Deposit to<select name="accountId" required></select></label>
-      <label>Date<input name="date" required type="date"></label>
-      <div class="row">
-        <button value="cancel" class="secondary">Cancel</button>
-        <button value="default" id="saveIncomeBtn">Save</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="incomeModal"><form method="dialog" id="incomeForm">
+    <h3>Add Income</h3>
+    <label>Source<input name="description" required placeholder="Salary"></label>
+    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
+    <label>Deposit to<select name="accountId" required></select></label>
+    <label>Date<input name="date" required type="date"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
 
-  <dialog id="expenseModal">
-    <form method="dialog" id="expenseForm">
-      <h3>Add Expense</h3>
-      <label>Description<input name="description" required placeholder="Groceries"></label>
-      <label>Category<input name="category" placeholder="Food"></label>
-      <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-      <label>Paid from<select name="accountId" required></select></label>
-      <label>Date<input name="date" required type="date"></label>
-      <div class="row">
-        <button value="cancel" class="secondary">Cancel</button>
-        <button value="default" id="saveExpenseBtn">Save</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="expenseModal"><form method="dialog" id="expenseForm">
+    <h3>Add Expense</h3>
+    <label>Description<input name="description" required placeholder="Groceries"></label>
+    <label>Category<select name="category" id="expenseCategory"></select></label>
+    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
+    <label>Paid from<select name="accountId" required></select></label>
+    <label>Date<input name="date" required type="date"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
 
-  <dialog id="transferModal">
-    <form method="dialog" id="transferForm">
-      <h3>Transfer</h3>
-      <label>From<select name="fromAccountId" required></select></label>
-      <label>To<select name="toAccountId" required></select></label>
-      <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
-      <label>Date<input name="date" required type="date"></label>
-      <div class="row">
-        <button value="cancel" class="secondary">Cancel</button>
-        <button value="default" id="saveTransferBtn">Save</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="transferModal"><form method="dialog" id="transferForm">
+    <h3>Transfer</h3>
+    <label>From<select name="fromAccountId" required></select></label>
+    <label>To<select name="toAccountId" required></select></label>
+    <label>Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
+    <label>Date<input name="date" required type="date"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <dialog id="budgetModal"><form method="dialog" id="budgetForm">
+    <h3>Add Budget Category</h3>
+    <label>Category<input name="name" required placeholder="Groceries"></label>
+    <label>Budget for each pay period<input name="amount" required type="number" min="0" step="0.01"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <dialog id="commitmentModal"><form method="dialog" id="commitmentForm">
+    <h3>Add Recurring Commitment</h3>
+    <label>Name<input name="name" required placeholder="Internet"></label>
+    <label>Expected amount<input name="amount" required type="number" min="0" step="0.01"></label>
+    <label>Due day<input name="dueDay" required type="number" min="1" max="31"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <dialog id="fundModal"><form method="dialog" id="fundForm">
+    <h3>Add Savings Fund</h3>
+    <label>Name<input name="name" required placeholder="Emergency Fund"></label>
+    <label>Reserved amount<input name="amount" required type="number" min="0" step="0.01"></label>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save</button></div>
+  </form></dialog>
+
+  <dialog id="editModal"><form method="dialog" id="editForm">
+    <h3>Edit Transaction</h3>
+    <input type="hidden" name="id">
+    <div id="editFields"></div>
+    <div class="row"><button value="cancel" class="secondary">Cancel</button><button value="default">Save Changes</button></div>
+  </form></dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>

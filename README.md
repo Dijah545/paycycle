@@ -1,36 +1,32 @@
-# PayCycle Budget
+# PayCycle Budget V1.1
 
-Offline-first personal budgeting PWA.
+Offline-first personal budgeting PWA built around pay cycles.
 
-## Current V1 features
-- Multiple accounts with opening balances
-- Income assigned to an account
-- Expenses assigned to an account
-- Transfers between accounts without inflating income/spending
-- Pay cycle based on a configurable payday (default: 25th)
-- Weekend/holiday payday adjustment to prior business day
-- Offline storage using IndexedDB
-- Installable PWA
-- JSON backup and restore
+## Added in V1.1
+- Budget period selector with previous/next navigation
+- 12 previous pay periods and 6 upcoming periods
+- Budget categories with per-period limits
+- Category spending and remaining-budget progress
+- Recurring commitments/bills by due day
+- Savings and sinking funds
+- Free-to-spend calculation
+- Edit and delete transactions
+- Delete budgets, bills, and savings funds
+- Existing multiple-account, income, expense, transfer, offline, PWA, and backup features retained
+
+## Important calculation note
+"Free to Spend" currently equals:
+current total account balances - recurring commitments in the selected period - reserved savings funds.
+
+This is deliberately simple for V1.1. In a later version, commitments can have paid/unpaid status so already-paid bills are not reserved twice.
 
 ## Run locally
-Use a local web server (service workers do not work from file://).
-
-Python:
 ```bash
 python -m http.server 8000
 ```
-
-Then open http://localhost:8000/paycycle-budget/
+Open the project through the local server, not directly with file://.
 
 ## GitHub Pages
-1. Create a repository.
-2. Upload the contents of this folder to the repository root.
-3. In GitHub: Settings → Pages.
-4. Deploy from the main branch/root.
-5. Open the Pages URL on your phone and add it to your Home Screen.
+Upload the project contents to the root of a GitHub repository, enable Pages for the main branch/root, then install the resulting site to your phone's Home Screen.
 
-## Important
-Financial data is stored locally in the browser/device. It is not committed to GitHub.
-
-Holiday dates are currently user-configurable so observed Jamaican holiday dates can be entered accurately. Automatic Jamaican holiday generation can be added in the next version.
+Financial records remain in IndexedDB on the device/browser and are not committed to GitHub.
