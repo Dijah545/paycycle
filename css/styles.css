@@ -228,3 +228,10 @@ input:focus,select:focus,textarea:focus{
 .field-help{display:block;font-size:.72rem;color:#61736d;font-weight:500;line-height:1.35;margin-top:2px}
 .quick-actions.action-cards{grid-template-columns:repeat(5,1fr)}
 @media(max-width:700px){.quick-actions.action-cards{grid-template-columns:repeat(3,1fr)}}
+
+#billForm input[type="date"]{
+  width:100%;
+  min-height:44px;
+  font-size:16px;
+  cursor:pointer;
+}

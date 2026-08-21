@@ -134,7 +134,10 @@
 </form></dialog>
 
 <dialog id="billModal"><form id="billForm">
-  <h3>Add Recurring Bill</h3><label>Name<input name="name" required placeholder="Internet"></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Due day<input name="dueDay" type="number" min="1" max="31" required></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Bill</button></div>
+  <h3>Add Recurring Bill</h3><label>Name<input name="name" required placeholder="Internet"></label><label>Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Due Date
+    <input name="dueDate" type="date" required>
+    <span class="field-help">Choose the next due date. The bill will recur monthly on the same day.</span>
+  </label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Bill</button></div>
 </form></dialog>
 
 <dialog id="fundModal"><form id="fundForm">
@@ -194,7 +197,14 @@ function render(){
  $('#accountsList').innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="account"><div><strong>${a.name}</strong><div class="tx-meta">${a.type}</div></div><strong>${money.format(balance(a.id))}</strong></div>`).join(''):'<p class="muted">Tap + Account to add your first account.</p>';
  let budgetHtml=state.budgets.length?state.budgets.map(b=>{let used=m.tx.filter(t=>t.type==='expense'&&t.category===b.name).reduce((s,t)=>s+Number(t.amount),0),pct=Math.min(100,b.amount?used/b.amount*100:0);return`<div class="budget-row"><div style="flex:1"><div class="row"><strong>${b.name}</strong><span>${money.format(Math.max(0,b.amount-used))} left</span></div><div class="tx-meta">${money.format(used)} of ${money.format(b.amount)}</div><div class="progress"><i style="width:${pct}%"></i></div></div></div>`}).join(''):'<p class="muted">No budgets yet.</p>';
  $('#budgetsList').innerHTML=budgetHtml;$('#planBudgetsList').innerHTML=budgetHtml;
- let billHtml=state.bills.length?state.bills.map(b=>{let key=iso(m.c.start)+'|'+b.id,paid=!!state.billPaid[key];return`<div class="bill-row"><div><strong>${b.name}</strong><div class="tx-meta">Due day ${b.dueDay} • ${paid?'Paid':'Unpaid'}</div></div><div class="item-actions"><strong>${money.format(b.amount)}</strong><button type="button" class="mini ${paid?'secondary':'success'}" data-pay="${b.id}">${paid?'Undo':'Mark Paid'}</button></div></div>`}).join(''):'<p class="muted">No recurring bills yet.</p>';
+ let billHtml=state.bills.length?state.bills.map(b=>{
+  let key=iso(m.c.start)+'|'+b.id,paid=!!state.billPaid[key];
+  let dueDay=Number(b.dueDay||((b.dueDate||'').split('-')[2])||1);
+  let due=new Date(m.c.start.getFullYear(),m.c.start.getMonth(),dueDay,12);
+  if(due<m.c.start) due=new Date(m.c.end.getFullYear(),m.c.end.getMonth(),dueDay,12);
+  if(due>m.c.end) due=new Date(m.c.end);
+  return`<div class="bill-row"><div><strong>${b.name}</strong><div class="tx-meta">Due ${fmt(due)} • ${paid?'Paid':'Unpaid'}</div></div><div class="item-actions"><strong>${money.format(b.amount)}</strong><button type="button" class="mini ${paid?'secondary':'success'}" data-pay="${b.id}">${paid?'Undo':'Mark Paid'}</button></div></div>`
+}).join(''):'<p class="muted">No recurring bills yet.</p>';
  $('#billsList').innerHTML=billHtml;$('#planBillsList').innerHTML=billHtml;
  let fundHtml=state.funds.length?state.funds.map(f=>`<div class="fund-row"><div><strong>${f.name}</strong><div class="tx-meta">${f.target?money.format(f.amount)+' of '+money.format(f.target):'Reserved savings'}</div></div><strong>${money.format(f.amount)}</strong></div>`).join(''):'<p class="muted">No savings funds yet.</p>';
  $('#fundsList').innerHTML=fundHtml;$('#planFundsList').innerHTML=fundHtml;
@@ -241,7 +251,23 @@ $('#adjustmentForm').onsubmit=e=>{
   render();
 };
 $('#budgetForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.budgets.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount'))});save();closeDialog(e.target);render()};
-$('#billForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.bills.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),dueDay:Number(f.get('dueDay'))});save();closeDialog(e.target);render()};
+$('#billForm').onsubmit=e=>{
+  e.preventDefault();
+  let f=new FormData(e.target);
+  const dueDate=f.get('dueDate');
+  if(!dueDate){alert('Please select a due date.');return}
+  const parts=dueDate.split('-').map(Number);
+  state.bills.push({
+    id:uid(),
+    name:f.get('name').trim(),
+    amount:Number(f.get('amount')),
+    dueDate:dueDate,
+    dueDay:parts[2]
+  });
+  save();
+  closeDialog(e.target);
+  render();
+};
 $('#fundForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.funds.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),target:Number(f.get('target')||0)});save();closeDialog(e.target);render()};
 $('#exportData').onclick=()=>{let a=document.createElement('a'),blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='khadijahs-budget-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
 $('#importData').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{state=Object.assign({accounts:[],transactions:[],budgets:[],bills:[],funds:[],billPaid:{}},JSON.parse(await f.text()));save();render();alert('Backup restored.')}catch(err){alert('Invalid backup file.')}e.target.value=''};
