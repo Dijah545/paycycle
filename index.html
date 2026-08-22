@@ -529,35 +529,45 @@ function renderCreditCard(){
 
   const openingKh=Number(snapshot?.khadijahOwed||0);
   const openingMom=Number(snapshot?.momOwed||0);
-  let khDirect=0,momDirect=0,khShared=0,momShared=0,sharedTotal=0;
 
-  // Opening snapshot covers all activity through its as-of date.
-  // New activity after that date is allocated by owner.
-  const ownerPurchases=snapshot?state.ccPurchases.filter(x=>x.date>snapshot.asOfDate):purchases;
-  ownerPurchases.forEach(x=>{
+  let khDirect=0, momDirect=0, khShared=0, momShared=0, sharedTotal=0;
+
+  // IMPORTANT:
+  // Every purchase the user explicitly enters must always affect Who Owes What.
+  // The opening snapshot is only a starting balance for older/unitemized card activity.
+  // Do not filter entered purchases out based on the snapshot date.
+  purchases.forEach(x=>{
     const amount=Number(x.jmdAmount||0);
-    if(x.owner==='khadijah')khDirect+=amount;
-    else if(x.owner==='mom')momDirect+=amount;
-    else if(x.owner==='shared'){
+
+    if(x.owner==='khadijah'){
+      khDirect+=amount;
+    }else if(x.owner==='mom'){
+      momDirect+=amount;
+    }else if(x.owner==='shared'){
       const khPct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
+      const momPct=100-khPct;
       khShared+=amount*(khPct/100);
-      momShared+=amount*((100-khPct)/100);
+      momShared+=amount*(momPct/100);
       sharedTotal+=amount;
     }
   });
+
   const khResponsibility=openingKh+khDirect+khShared;
   const momResponsibility=openingMom+momDirect+momShared;
-  const ownerPayments=snapshot?state.ccPayments.filter(x=>x.date>snapshot.asOfDate):pays;
-  const khp=ownerPayments.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount),0);
-  const mop=ownerPayments.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount),0);
 
-  $('#ccKhadijahOpening').textContent=money.format(openingKh);
-  $('#ccMomOpening').textContent=money.format(openingMom);
-  $('#ccKhadijahDirect').textContent=money.format(khDirect);
-  $('#ccMomDirect').textContent=money.format(momDirect);
-  $('#ccKhadijahShared').textContent=money.format(khShared);
-  $('#ccMomShared').textContent=money.format(momShared);
-  $('#ccSharedTotal').textContent=money.format(sharedTotal);
+  // Payments entered for the selected statement are attributed to the person
+  // selected when the payment was recorded.
+  const khp=pays.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount),0);
+  const mop=pays.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount),0);
+
+  if($('#ccKhadijahDirect')) $('#ccKhadijahDirect').textContent=money.format(khDirect);
+  if($('#ccMomDirect')) $('#ccMomDirect').textContent=money.format(momDirect);
+  if($('#ccKhadijahShared')) $('#ccKhadijahShared').textContent=money.format(khShared);
+  if($('#ccMomShared')) $('#ccMomShared').textContent=money.format(momShared);
+  if($('#ccKhadijahOpening')) $('#ccKhadijahOpening').textContent=money.format(openingKh);
+  if($('#ccMomOpening')) $('#ccMomOpening').textContent=money.format(openingMom);
+  if($('#ccSharedTotal')) $('#ccSharedTotal').textContent=money.format(sharedTotal);
+
   $('#ccKhadijahSpend').textContent=money.format(khResponsibility);
   $('#ccMomSpend').textContent=money.format(momResponsibility);
   $('#ccKhadijahPaid').textContent=money.format(khp);
