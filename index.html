@@ -58,7 +58,7 @@
 
   <section class="money-hero">
     <article class="free-card">
-      <div><p class="eyebrow light">AVAILABLE NOW</p><span>Free to Spend</span><strong id="freeToSpend">$0.00</strong><small>After unpaid bills and reserved savings</small></div>
+      <div><p class="eyebrow light">AVAILABLE NOW</p><span>Free to Spend</span><strong id="freeToSpend">$0.00</strong><small>After unpaid bills; long-term savings kept separate</small></div>
       <div class="payday-badge"><span>Selected cycle</span><strong id="cycleLabel">—</strong></div>
     </article>
     <div class="metric-strip">
@@ -66,7 +66,7 @@
       <article><span>Income</span><strong id="incomeTotal">$0</strong></article>
       <article><span>Spent</span><strong id="spentTotal">$0</strong></article>
       <article><span>Unpaid Bills</span><strong id="billsTotal">$0</strong></article>
-      <article><span>Reserved</span><strong id="reservedTotal">$0</strong></article>
+      <article><span>Long-Term Savings</span><strong id="reservedTotal">$0</strong></article>
     </div>
   </section>
 
@@ -96,7 +96,7 @@
   <section class="card"><div class="section-title"><h2>Spending Categories</h2><button type="button" data-open="categoryModal">+ Category</button></div><div id="homeCategoriesList" class="category-grid"></div></section>
   <section class="card"><div class="section-title"><h2>Budgets</h2><button type="button" data-open="budgetModal">+ Budget</button></div><div id="budgetsList" class="list"></div></section>
   <section class="card"><div class="section-title"><h2>Recurring Bills</h2><button type="button" data-open="billModal">+ Bill</button></div><div id="billsList" class="list"></div></section>
-  <section class="card"><div class="section-title"><h2>Savings Funds</h2><button type="button" data-open="fundModal">+ Fund</button></div><div id="fundsList" class="list"></div></section>
+  <section class="card"><div class="section-title"><h2>Long-Term Savings</h2><button type="button" data-open="fundModal">+ Deposit</button></div><div id="fundsList" class="list"></div></section>
 </section>
 
 <section id="activity" class="page">
@@ -109,7 +109,11 @@
   <section class="card"><div class="section-title"><h2>Spending Categories</h2><button type="button" data-open="categoryModal">+ Category</button></div><p class="muted small">Create categories independently of budget limits.</p><div id="categoriesList" class="category-grid"></div></section>
   <section class="card"><div class="section-title"><h2>Budget Plan</h2><button type="button" data-open="budgetModal">+ Budget</button></div><div id="planBudgetsList" class="list"></div></section>
   <section class="card"><div class="section-title"><h2>Upcoming Bills</h2><button type="button" data-open="billModal">+ Bill</button></div><div id="planBillsList" class="list"></div></section>
-  <section class="card"><div class="section-title"><h2>Savings</h2><button type="button" data-open="fundModal">+ Fund</button></div><div id="planFundsList" class="list"></div></section>
+  <section class="card">
+    <div class="section-title"><div><p class="eyebrow">LONG-TERM</p><h2>High-Yield Savings</h2></div><button type="button" data-open="fundModal">+ Deposit</button></div>
+    <p class="muted small">Money saved here is for the future. It is tracked separately and is not included in Free to Spend.</p>
+    <div id="planFundsList" class="list"></div>
+  </section>
 </section>
 
 
@@ -326,8 +330,35 @@
   </label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Bill</button></div>
 </form></dialog>
 
+
+<dialog id="editSavingModal"><form id="editSavingForm">
+  <h3>Edit Savings Deposit</h3>
+  <input type="hidden" name="id">
+  <label>Description<input name="name" required></label>
+  <label>Deposit Amount<input name="amount" required type="number" min="0.01" step="0.01"></label>
+  <label>Date<input name="date" required type="date"></label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Changes</button></div>
+</form></dialog>
 <dialog id="fundModal"><form id="fundForm">
-  <h3>Add Savings Fund</h3><label>Name<input name="name" required placeholder="Emergency Fund"></label><label>Reserved Amount<input name="amount" type="number" min="0" step="0.01" required></label><label>Target<input name="target" type="number" min="0" step="0.01"></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Fund</button></div>
+  <h3>Add Savings Deposit</h3>
+  <p class="muted small">Record money you are putting aside in your high-yield savings account.</p>
+  <label>Description
+    <input name="name" required value="High-Yield Savings" placeholder="High-Yield Savings">
+  </label>
+  <label>Deposit Amount
+    <input name="amount" required type="number" min="0.01" step="0.01">
+  </label>
+  <label>Date
+    <input name="date" required type="date">
+  </label>
+  <label>From Account
+    <select name="accountId"></select>
+    <span class="field-help">Optional. Select the account the money is moving from so that account balance is reduced.</span>
+  </label>
+  <div class="row">
+    <button type="button" data-close class="secondary">Cancel</button>
+    <button type="submit">Save Deposit</button>
+  </div>
 </form></dialog>
 
 <script>
@@ -382,6 +413,7 @@ function options(){
 function accountSelects(){
  let opts=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
  $$('select[name=accountId],select[name=from],select[name=to]').forEach(s=>s.innerHTML=opts);
+ let fundAccount=$('#fundForm select[name=accountId]'); if(fundAccount) fundAccount.innerHTML='<option value="">Do not link to account</option>'+opts;
  let cats=state.categories.map(c=>`<option value="${c.name}">${c.icon||'•'} ${c.name}</option>`).join('');
  $('#expenseForm select[name=category]').innerHTML=cats||'<option value="Other">Other</option>';
  let budgetSelect=$('#budgetForm select[name=category]');
@@ -393,7 +425,7 @@ function metrics(){
  let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense'&&!t.ccPayment).reduce((s,t)=>s+Number(t.amount),0);
  let assets=state.accounts.reduce((s,a)=>s+balance(a.id),0),liquid=state.accounts.filter(a=>a.liquid!==false).reduce((s,a)=>s+balance(a.id),0),reserved=state.funds.reduce((s,f)=>s+Number(f.amount),0);
  let unpaid=state.bills.reduce((s,b)=>s+(state.billPaid[iso(c.start)+'|'+b.id]?0:Number(b.amount)),0);
- return{c,tx,income,spent,assets,liquid,reserved,unpaid,free:liquid-reserved-unpaid}
+ return{c,tx,income,spent,assets,liquid,reserved,unpaid,free:liquid-unpaid}
 }
 
 let statementOffset=0;
@@ -523,7 +555,17 @@ function render(){
   return`<div class="bill-row"><div><strong>${b.name}</strong><div class="tx-meta">Due ${fmt(due)} • ${paid?'Paid':'Unpaid'}</div></div><div class="item-actions"><strong>${money.format(b.amount)}</strong><button type="button" class="mini ${paid?'secondary':'success'}" data-pay="${b.id}">${paid?'Undo':'Mark Paid'}</button></div></div>`
 }).join(''):'<p class="muted">No recurring bills yet.</p>';
  $('#billsList').innerHTML=billHtml;$('#planBillsList').innerHTML=billHtml;
- let fundHtml=state.funds.length?state.funds.map(f=>`<div class="fund-row"><div><strong>${f.name}</strong><div class="tx-meta">${f.target?money.format(f.amount)+' of '+money.format(f.target):'Reserved savings'}</div></div><strong>${money.format(f.amount)}</strong></div>`).join(''):'<p class="muted">No savings funds yet.</p>';
+ let totalSaved=state.funds.reduce((s,f)=>s+Number(f.amount||0),0);
+ let fundHtml=state.funds.length?`
+   <div class="savings-total">
+     <span>Total Saved</span>
+     <strong>${money.format(totalSaved)}</strong>
+     <small>${state.funds.length} deposit${state.funds.length===1?'':'s'} recorded</small>
+   </div>
+   ${[...state.funds].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(f=>`<div class="fund-row">
+     <div><strong>${f.name||'High-Yield Savings'}</strong><div class="tx-meta">${f.date||''}${f.accountId?' • from '+accountName(f.accountId):''}</div></div>
+     <div class="item-actions"><strong class="positive">+${money.format(f.amount)}</strong><button type="button" class="mini secondary" data-edit-saving="${f.id}">Edit</button><button type="button" class="mini danger" data-delete-saving="${f.id}">Delete</button></div>
+   </div>`).join('')}`:'<p class="muted">No savings deposits yet.</p>';
  $('#fundsList').innerHTML=fundHtml;$('#planFundsList').innerHTML=fundHtml;
  let type=$('#typeFilter').value,q=$('#searchTx').value.toLowerCase(),rows=[...m.tx].filter(t=>(type==='all'||t.type===type)&&JSON.stringify(t).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
  $('#transactionsList').innerHTML=rows.length?rows.map(t=>{
@@ -564,6 +606,7 @@ function open(id){
    f.elements.khadijahOwed.value=s.khadijahOwed??0;
    f.elements.momOwed.value=s.momOwed??0;
  }
+ if(id==='fundModal'){f.elements.name.value='High-Yield Savings';f.elements.date.value=todayIso()}
  if(id==='ccPurchaseModal'){$('#foreignAmountWrap').classList.add('hidden');$('#splitWrap').classList.add('hidden');$('#effectiveRatePreview').textContent='—'}
  if(d.showModal)d.showModal();else d.setAttribute('open','')
 }
@@ -577,6 +620,11 @@ function categoryOptionHtml(selected){
 }
 function accountOptionHtml(selected){
  return state.accounts.map(a=>`<option value="${a.id}" ${a.id===selected?'selected':''}>${escHtml(a.name)}</option>`).join('');
+}
+function openSavingEditor(id){
+ const s=state.funds.find(x=>x.id===id);if(!s)return;
+ open('editSavingModal');
+ const f=$('#editSavingForm');f.elements.id.value=s.id;f.elements.name.value=s.name||'High-Yield Savings';f.elements.amount.value=s.amount;f.elements.date.value=s.date||todayIso();
 }
 function openAccountEditor(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;open('editAccountModal');const f=$('#editAccountForm');f.elements.id.value=a.id;f.elements.name.value=a.name||'';f.elements.type.value=a.type||'Other';f.elements.currentBalance.value=Number(balance(a.id)).toFixed(2)}
 function openTransactionEditor(id){
@@ -623,6 +671,18 @@ document.addEventListener('click',e=>{
  let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal','adjustmentModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
  let cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeDialog(cl);return}
 
+ let editSaving=e.target.closest('[data-edit-saving]');if(editSaving){openSavingEditor(editSaving.dataset.editSaving);return}
+ let deleteSaving=e.target.closest('[data-delete-saving]');
+ if(deleteSaving){
+   const s=state.funds.find(x=>x.id===deleteSaving.dataset.deleteSaving);
+   if(s&&confirm('Delete this savings deposit?')){
+     state.funds=state.funds.filter(x=>x.id!==s.id);
+     // Remove linked automatic source-account adjustment, if present.
+     state.transactions=state.transactions.filter(t=>!(t.savingsTransfer&&t.date===s.date&&t.accountId===s.accountId&&Number(t.amount)===Number(s.amount)));
+     save();render();
+   }
+   return;
+ }
  let editAccount=e.target.closest('[data-edit-account]');if(editAccount){openAccountEditor(editAccount.dataset.editAccount);return}
  let editTx=e.target.closest('[data-edit-tx]');
  if(editTx){openTransactionEditor(editTx.dataset.editTx);return}
@@ -693,6 +753,23 @@ $('#ccSnapshotForm').onsubmit=e=>{
 $('#cardSettingsForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.creditCard={name:f.get('name').trim(),limit:Number(f.get('limit')||0)};save();closeDialog(e.target);renderCreditCard()};
 $('#ccPurchaseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),cur=f.get('currency'),foreign=Number(f.get('foreignAmount')||0),jmd=Number(f.get('jmdAmount'));state.ccPurchases.push({id:uid(),description:f.get('description').trim(),category:f.get('category'),owner:f.get('owner'),khadijahShare:Number(f.get('khadijahShare')||50),date:f.get('date'),jmdAmount:jmd,currency:cur,foreignAmount:cur==='JMD'?null:foreign,effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null});save();closeDialog(e.target);render()};
 $('#ccPaymentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),amt=Number(f.get('amount')),acct=f.get('accountId');state.ccPayments.push({id:uid(),owner:f.get('owner'),amount:amt,date:f.get('date'),accountId:acct||null});if(f.get('deductAccount')==='on'&&acct){state.transactions.push({id:uid(),type:'expense',description:'Credit Card Payment',category:'Transfer / Credit Card',amount:amt,accountId:acct,date:f.get('date'),ccPayment:true})}save();closeDialog(e.target);render()};
+$('#editSavingForm').onsubmit=e=>{
+ e.preventDefault();
+ let f=new FormData(e.target),s=state.funds.find(x=>x.id===f.get('id'));if(!s)return;
+ const oldAmount=Number(s.amount),newAmount=Number(f.get('amount'));
+ if(!Number.isFinite(newAmount)||newAmount<=0){alert('Enter a valid savings amount.');return}
+
+ // Keep linked bank-account adjustment synchronized if this deposit was linked.
+ if(s.accountId){
+   const tx=state.transactions.find(t=>t.savingsTransfer&&t.date===s.date&&t.accountId===s.accountId&&Number(t.amount)===oldAmount);
+   if(tx){tx.amount=newAmount;tx.date=f.get('date')}
+ }
+
+ s.name=f.get('name').trim()||'High-Yield Savings';
+ s.amount=newAmount;
+ s.date=f.get('date');
+ save();closeDialog(e.target);render();
+};
 $('#editAccountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),a=state.accounts.find(x=>x.id===f.get('id'));if(!a)return;let target=Number(f.get('currentBalance'));if(!Number.isFinite(target)){alert('Enter a valid current balance.');return}let old=Number(balance(a.id)),diff=target-old;a.name=f.get('name').trim();a.type=f.get('type');if(Math.abs(diff)>=0.005)state.transactions.push({id:uid(),type:'adjustment',description:'Balance adjustment',amount:Math.abs(diff),adjustmentDirection:diff>=0?'increase':'decrease',accountId:a.id,date:todayIso()});save();closeDialog(e.target);render()};
 $('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.accounts.push({id:uid(),name:f.get('name').trim(),type:f.get('type'),opening:Number(f.get('balance')),liquid:f.get('liquid')==='on'});save();closeDialog(e.target);render()};
 $('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
@@ -770,7 +847,41 @@ $('#billForm').onsubmit=e=>{
   closeDialog(e.target);
   render();
 };
-$('#fundForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.funds.push({id:uid(),name:f.get('name').trim(),amount:Number(f.get('amount')),target:Number(f.get('target')||0)});save();closeDialog(e.target);render()};
+$('#fundForm').onsubmit=e=>{
+  e.preventDefault();
+  let f=new FormData(e.target);
+  const amount=Number(f.get('amount'));
+  if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid savings amount.');return}
+
+  const accountId=f.get('accountId')||null;
+  const deposit={
+    id:uid(),
+    name:f.get('name').trim()||'High-Yield Savings',
+    amount:amount,
+    date:f.get('date'),
+    accountId:accountId
+  };
+  state.funds.push(deposit);
+
+  // If linked to a spending/bank account, move the money out of that account
+  // without counting it as an expense.
+  if(accountId){
+    state.transactions.push({
+      id:uid(),
+      type:'adjustment',
+      description:'Transfer to High-Yield Savings',
+      amount:amount,
+      adjustmentDirection:'decrease',
+      accountId:accountId,
+      date:f.get('date'),
+      savingsTransfer:true
+    });
+  }
+
+  save();
+  closeDialog(e.target);
+  render();
+};
 $('#exportData').onclick=()=>{let a=document.createElement('a'),blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});a.href=URL.createObjectURL(blob);a.download='khadijahs-budget-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
 $('#importData').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{state=Object.assign({accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{}},JSON.parse(await f.text()));save();render();alert('Backup restored.')}catch(err){alert('Invalid backup file.')}e.target.value=''};
 $('#resetData').onclick=()=>{if(confirm("Erase all Khadijah's Budget data on this device?")){state={accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{}};save();location.reload()}};

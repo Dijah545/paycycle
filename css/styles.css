@@ -380,3 +380,15 @@ input:focus,select:focus,textarea:focus{
 .snapshot-note span{font-size:.78rem}
 
 .account-right{display:flex;align-items:center;gap:10px}.account-right .mini{white-space:nowrap}
+
+.savings-total{
+  display:grid;
+  gap:3px;
+  padding:16px;
+  margin-bottom:10px;
+  border-radius:16px;
+  background:#e8f3fc;
+  border:1px solid #d9e4ef;
+}
+.savings-total span,.savings-total small{color:#62758a}
+.savings-total strong{font-size:1.6rem;color:#0078d4}
