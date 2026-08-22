@@ -269,3 +269,16 @@ input:focus,select:focus,textarea:focus{
 .category-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e5f4ee;font-size:.9rem}
 .category-delete{width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;display:grid;place-items:center;background:transparent;color:#61736d;font-size:1rem}
 .category-delete:hover{background:#fde7ec;color:#b9173f}
+
+.activity-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:12px;
+  align-items:center;
+}
+.activity-main{min-width:0}
+.activity-actions{display:flex;gap:6px}
+@media(max-width:650px){
+  .activity-row{grid-template-columns:minmax(0,1fr) auto}
+  .activity-actions{grid-column:1/-1;justify-content:flex-end}
+}

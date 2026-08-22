@@ -147,6 +147,17 @@
 </form></dialog>
 
 
+
+<dialog id="editTransactionModal"><form id="editTransactionForm">
+  <h3>Edit Activity</h3>
+  <input type="hidden" name="id">
+  <div id="editTransactionFields"></div>
+  <div class="row">
+    <button type="button" data-close class="secondary">Cancel</button>
+    <button type="submit">Save Changes</button>
+  </div>
+</form></dialog>
+
 <dialog id="categoryModal"><form id="categoryForm">
   <h3>Add Spending Category</h3>
   <label>Category Name<input name="name" required placeholder="e.g. Groceries"></label>
@@ -256,11 +267,22 @@ function render(){
  $('#fundsList').innerHTML=fundHtml;$('#planFundsList').innerHTML=fundHtml;
  let type=$('#typeFilter').value,q=$('#searchTx').value.toLowerCase(),rows=[...m.tx].filter(t=>(type==='all'||t.type===type)&&JSON.stringify(t).toLowerCase().includes(q)).sort((a,b)=>b.date.localeCompare(a.date));
  $('#transactionsList').innerHTML=rows.length?rows.map(t=>{
- let title=t.description||'Transfer',meta=t.type==='transfer'?accountName(t.from)+' → '+accountName(t.to):accountName(t.accountId);
+ let title=t.description||'Transfer';
+ let accountText=t.type==='transfer'?accountName(t.from)+' → '+accountName(t.to):accountName(t.accountId);
+ let detail=t.type==='expense'?(t.category||'Uncategorised')+' • '+accountText:accountText;
  let sign=t.type==='income'||t.type==='adjustment'?'+':t.type==='expense'?'-':'';
  let cls=t.type==='income'||t.type==='adjustment'?'positive':t.type==='expense'?'negative':'';
- let typeLabel=t.type==='adjustment'?'Existing funds':t.type;
- return `<div class="tx"><div><strong>${title}</strong><div class="tx-meta">${t.date} • ${typeLabel} • ${meta}</div></div><strong class="${cls}">${sign}${money.format(t.amount)}</strong></div>`
+ return `<div class="tx activity-row">
+   <div class="activity-main">
+     <strong>${title}</strong>
+     <div class="tx-meta">${t.date} • ${detail}</div>
+   </div>
+   <strong class="${cls}">${sign}${money.format(t.amount)}</strong>
+   <div class="activity-actions">
+     <button type="button" class="mini secondary" data-edit-tx="${t.id}">Edit</button>
+     <button type="button" class="mini danger" data-delete-tx="${t.id}">Delete</button>
+   </div>
+ </div>`
 }).join(''):'<p class="muted">No transactions in this period.</p>';
  $('#summaryMetrics').innerHTML=`<div class="metric"><span>Income</span><strong>${money.format(m.income)}</strong></div><div class="metric"><span>Spent</span><strong>${money.format(m.spent)}</strong></div><div class="metric"><span>Net Cash Flow</span><strong>${money.format(m.income-m.spent)}</strong></div><div class="metric"><span>Free to Spend</span><strong>${money.format(m.free)}</strong></div>`;
  let cats={};m.tx.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
@@ -269,9 +291,72 @@ function render(){
 }
 function open(id){let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');if(f){f.reset();d.querySelectorAll('input[type=date]').forEach(x=>x.value=todayIso())}if(d.showModal)d.showModal();else d.setAttribute('open','')}
 function closeDialog(el){let d=el.closest('dialog');if(d){if(d.close)d.close();else d.removeAttribute('open')}}
+
+function escHtml(value){
+ return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function categoryOptionHtml(selected){
+ return state.categories.map(c=>`<option value="${escHtml(c.name)}" ${c.name===selected?'selected':''}>${c.icon||'•'} ${escHtml(c.name)}</option>`).join('');
+}
+function accountOptionHtml(selected){
+ return state.accounts.map(a=>`<option value="${a.id}" ${a.id===selected?'selected':''}>${escHtml(a.name)}</option>`).join('');
+}
+function openTransactionEditor(id){
+ const t=state.transactions.find(x=>x.id===id);
+ if(!t)return;
+
+ const form=$('#editTransactionForm');
+ form.elements.id.value=t.id;
+ const fields=$('#editTransactionFields');
+
+ if(t.type==='expense'){
+   fields.innerHTML=`
+    <label>Description<input name="description" required value="${escHtml(t.description||'')}"></label>
+    <label>Category
+      <select name="category">${categoryOptionHtml(t.category||'')}</select>
+      <span class="field-help">Need another category? Cancel, add it under Spending Categories, then edit this activity again.</span>
+    </label>
+    <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required value="${Number(t.amount)}"></label>
+    <label>Paid From<select name="accountId" required>${accountOptionHtml(t.accountId)}</select></label>
+    <label>Date<input name="date" type="date" required value="${t.date}"></label>`;
+ }else if(t.type==='income'){
+   fields.innerHTML=`
+    <label>Source<input name="description" required value="${escHtml(t.description||'')}"></label>
+    <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required value="${Number(t.amount)}"></label>
+    <label>Deposit To<select name="accountId" required>${accountOptionHtml(t.accountId)}</select></label>
+    <label>Date<input name="date" type="date" required value="${t.date}"></label>`;
+ }else if(t.type==='adjustment'){
+   fields.innerHTML=`
+    <label>Description<input name="description" required value="${escHtml(t.description||'Existing balance')}"></label>
+    <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required value="${Number(t.amount)}"></label>
+    <label>Account<select name="accountId" required>${accountOptionHtml(t.accountId)}</select></label>
+    <label>Date<input name="date" type="date" required value="${t.date}"></label>`;
+ }else if(t.type==='transfer'){
+   fields.innerHTML=`
+    <label>From<select name="from" required>${accountOptionHtml(t.from)}</select></label>
+    <label>To<select name="to" required>${accountOptionHtml(t.to)}</select></label>
+    <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required value="${Number(t.amount)}"></label>
+    <label>Date<input name="date" type="date" required value="${t.date}"></label>`;
+ }
+ open('editTransactionModal');
+}
+
 document.addEventListener('click',e=>{
  let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal','adjustmentModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
  let cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeDialog(cl);return}
+
+ let editTx=e.target.closest('[data-edit-tx]');
+ if(editTx){openTransactionEditor(editTx.dataset.editTx);return}
+
+ let deleteTx=e.target.closest('[data-delete-tx]');
+ if(deleteTx){
+   const tx=state.transactions.find(t=>t.id===deleteTx.dataset.deleteTx);
+   if(tx && confirm(`Delete this ${tx.type} entry${tx.description?' — '+tx.description:''}?`)){
+     state.transactions=state.transactions.filter(t=>t.id!==tx.id);
+     save();render();
+   }
+   return;
+ }
  let pay=e.target.closest('[data-pay]');if(pay){let key=iso(cycle().start)+'|'+pay.dataset.pay;state.billPaid[key]=!state.billPaid[key];save();render();return}
  let delCat=e.target.closest('[data-delete-category]');
  if(delCat){
@@ -304,6 +389,36 @@ $('#adjustmentForm').onsubmit=e=>{
   closeDialog(e.target);
   render();
 };
+
+$('#editTransactionForm').onsubmit=e=>{
+ e.preventDefault();
+ let f=new FormData(e.target);
+ let t=state.transactions.find(x=>x.id===f.get('id'));
+ if(!t)return;
+
+ const amount=Number(f.get('amount'));
+ if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid amount.');return}
+
+ t.amount=amount;
+ t.date=f.get('date');
+
+ if(t.type==='expense'){
+   t.description=f.get('description').trim();
+   t.category=f.get('category');
+   t.accountId=f.get('accountId');
+ }else if(t.type==='income'||t.type==='adjustment'){
+   t.description=f.get('description').trim();
+   t.accountId=f.get('accountId');
+ }else if(t.type==='transfer'){
+   if(f.get('from')===f.get('to')){alert('Choose different accounts for the transfer.');return}
+   t.from=f.get('from');
+   t.to=f.get('to');
+ }
+ save();
+ closeDialog(e.target);
+ render();
+};
+
 $('#categoryForm').onsubmit=e=>{
  e.preventDefault();let f=new FormData(e.target),name=f.get('name').trim();
  if(state.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('That category already exists.');return}
