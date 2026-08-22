@@ -282,3 +282,67 @@ input:focus,select:focus,textarea:focus{
   .activity-row{grid-template-columns:minmax(0,1fr) auto}
   .activity-actions{grid-column:1/-1;justify-content:flex-end}
 }
+
+/* ===== Khadijah's Budget — Azure Blue Theme ===== */
+:root{
+  --kb-green:#0078d4;
+  --kb-green-dark:#005a9e;
+  --kb-green-bright:#1084d8;
+  --kb-green-soft:#e8f3fc;
+  --kb-cream:#f7f9fc;
+  --kb-card:#ffffff;
+  --kb-ink:#102a43;
+  --kb-muted:#62758a;
+  --kb-line:#d9e4ef;
+  --kb-red:#d13438;
+  --kb-orange:#ff8c00;
+  --kb-blue:#0078d4;
+  --kb-purple:#5c2d91;
+}
+
+html,body{background:#f7f9fc;color:var(--kb-ink)}
+.app-header{background:#f7f9fc}
+.brand-mark{
+  background:#0078d4;
+  box-shadow:0 8px 22px rgba(0,120,212,.20);
+}
+.eyebrow{color:#0078d4}
+.card{
+  background:#fff;
+  border-color:#d9e4ef;
+  box-shadow:0 4px 16px rgba(0,90,158,.05);
+}
+.free-card{
+  background:linear-gradient(135deg,#0078d4,#005a9e);
+  box-shadow:0 14px 30px rgba(0,120,212,.22);
+}
+button,.file-button{background:#0078d4;color:#fff}
+button:hover,.file-button:hover{background:#005a9e}
+.secondary{background:#e8f3fc;color:#005a9e}
+.secondary:hover{background:#d7ebfa}
+.success{background:#e8f3fc;color:#0078d4}
+.action-icon{background:#0078d4}
+.action-cards button:hover{background:#f4f9fd}
+.account,.category-chip{background:#f5f9fd;border-color:#d9e4ef}
+.category-icon{background:#e8f3fc}
+.progress{background:#e6edf4}
+.progress>i,.income-bar{background:#0078d4}
+.status-chip,.pill{background:#e8f3fc;color:#005a9e}
+input:focus,select:focus,textarea:focus{
+  outline:2px solid rgba(0,120,212,.18);
+  border-color:#0078d4;
+}
+.tab{background:#edf4fa;color:#005a9e}
+.tab.active{
+  background:#0078d4;
+  color:#fff;
+  box-shadow:0 4px 14px rgba(0,120,212,.18);
+}
+@media(max-width:700px){
+  .tabs{
+    background:linear-gradient(180deg,#0078d4,#005a9e);
+    box-shadow:0 -5px 22px rgba(0,90,158,.18);
+  }
+  .tabs .tab{color:#dceefa;background:transparent}
+  .tabs .tab.active{color:#fff;background:rgba(255,255,255,.15)}
+}
