@@ -519,3 +519,21 @@ html[data-theme="dark"] .shared-summary{
   .cc-payment-row{grid-template-columns:1fr}
   .cc-payment-row .item-actions{justify-content:flex-end}
 }
+
+/* Dark mode fix for Credit Card action cards */
+html[data-theme="dark"] .cc-actions button{
+  background:#152238;
+  color:#e6edf7;
+  border-color:#2b3d55;
+  box-shadow:none;
+}
+html[data-theme="dark"] .cc-actions button:hover{
+  background:#1b2b44;
+}
+html[data-theme="dark"] .cc-actions .action-icon{
+  background:#0078d4;
+  color:#fff;
+}
+html[data-theme="dark"] .cc-actions button small{
+  color:#9eb0c5;
+}
