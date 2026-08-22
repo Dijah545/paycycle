@@ -537,3 +537,68 @@ html[data-theme="dark"] .cc-actions .action-icon{
 html[data-theme="dark"] .cc-actions button small{
   color:#9eb0c5;
 }
+
+/* ===== Dark mode consistency fixes ===== */
+
+/* Home quick-action cards */
+html[data-theme="dark"] .action-cards button{
+  background:#152238;
+  color:#e6edf7;
+  border-color:#2b3d55;
+  box-shadow:none;
+}
+html[data-theme="dark"] .action-cards button:hover{
+  background:#1b2b44;
+}
+html[data-theme="dark"] .action-cards button strong{
+  color:#f3f7fc;
+}
+html[data-theme="dark"] .action-cards button small{
+  color:#9eb0c5;
+}
+html[data-theme="dark"] .action-cards .action-icon{
+  background:#0078d4;
+  color:#fff;
+}
+
+/* Insights metric cards */
+html[data-theme="dark"] .report-grid .metric{
+  background:#152238;
+  border:1px solid #2b3d55;
+  color:#e6edf7;
+}
+html[data-theme="dark"] .report-grid .metric span{
+  color:#9eb0c5;
+}
+html[data-theme="dark"] .report-grid .metric strong{
+  color:#f3f7fc;
+}
+
+/* Perfect centering for round icons */
+.category-icon,
+.owner-avatar{
+  display:grid !important;
+  place-items:center !important;
+  text-align:center !important;
+  line-height:1 !important;
+  padding:0 !important;
+  aspect-ratio:1 / 1;
+}
+
+/* Emoji/icon optical centering inside category circles */
+.category-icon{
+  width:30px;
+  height:30px;
+  font-size:16px;
+  overflow:hidden;
+}
+
+/* K / M avatar optical centering */
+.owner-avatar{
+  width:40px;
+  height:40px;
+  font-size:16px !important;
+  font-weight:800;
+  border-radius:50%;
+  flex:0 0 40px;
+}
