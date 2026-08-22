@@ -356,3 +356,25 @@ input:focus,select:focus,textarea:focus{
 .cc-actions{grid-template-columns:repeat(2,1fr)!important;max-width:520px}
 .fx-preview{padding:10px 12px;background:#f5f9fd;border:1px solid #d9e4ef;border-radius:10px;margin-top:8px}
 @media(max-width:700px){.credit-summary-grid{grid-template-columns:1fr 1fr}.owner-grid{grid-template-columns:1fr}}
+
+.snapshot-split{
+  border:1px solid #d9e4ef;
+  border-radius:14px;
+  padding:10px 14px 4px;
+  margin:14px 0;
+}
+.snapshot-split legend{
+  padding:0 6px;
+  font-weight:800;
+  color:#102a43;
+}
+.snapshot-note{
+  display:grid;
+  gap:3px;
+  padding:12px 14px;
+  margin-bottom:8px;
+  border-radius:12px;
+  background:#e8f3fc;
+  color:#005a9e;
+}
+.snapshot-note span{font-size:.78rem}
