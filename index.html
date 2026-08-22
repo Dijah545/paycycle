@@ -179,6 +179,7 @@
 </main>
 
 <!-- dialogs -->
+<dialog id="editAccountModal"><form id="editAccountForm"><h3>Edit Account</h3><input type="hidden" name="id"><label>Account Name<input name="name" required></label><label>Account Type<select name="type"><option>Chequing</option><option>Savings</option><option>Cash</option><option>Digital Wallet</option><option>Other</option></select></label><label>Current Balance<input name="currentBalance" type="number" step="0.01" required><span class="field-help">Changing this adjusts the balance without deleting your transaction history.</span></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Changes</button></div></form></dialog>
 <dialog id="accountModal"><form id="accountForm">
   <h3>Add Account</h3><label>Name<input name="name" required placeholder="JN Bank"></label><label>Type<select name="type"><option>Bank</option><option>Savings</option><option>Cash</option><option>Wallet</option></select></label><label>Existing / Opening Balance
     <input name="balance" type="number" step="0.01" required value="0">
@@ -370,7 +371,7 @@ function inCycle(s,c){let d=new Date(s+'T12:00:00');return d>=c.start&&d<=c.end}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function accountName(id){let a=state.accounts.find(x=>x.id===id);return a?a.name:'Unknown'}
 function balance(id){let a=state.accounts.find(x=>x.id===id);if(!a)return 0;let v=Number(a.opening||0);state.transactions.forEach(t=>{if(t.type==='income'&&t.accountId===id)v+=Number(t.amount);
-if(t.type==='adjustment'&&t.accountId===id)v+=Number(t.amount);
+if(t.type==='adjustment'&&t.accountId===id)v+=(t.adjustmentDirection==='decrease'?-1:1)*Number(t.amount);
 if(t.type==='expense'&&t.accountId===id)v-=Number(t.amount);
 if(t.type==='transfer'){if(t.from===id)v-=Number(t.amount);if(t.to===id)v+=Number(t.amount)}});return v}
 function fmt(d){return d.toLocaleDateString('en-JM',{day:'numeric',month:'short',year:'numeric'})}
@@ -507,7 +508,7 @@ function renderCreditCard(){
 function render(){
  options();accountSelects();let m=metrics();
  $('#cycleLabel').textContent=fmt(m.c.start)+' – '+fmt(m.c.end);$('#freeToSpend').textContent=money.format(m.free);$('#totalPosition').textContent=money.format(m.assets);$('#incomeTotal').textContent=money.format(m.income);$('#spentTotal').textContent=money.format(m.spent);$('#billsTotal').textContent=money.format(m.unpaid);$('#reservedTotal').textContent=money.format(m.reserved);
- $('#accountsList').innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="account"><div><strong>${a.name}</strong><div class="tx-meta">${a.type}</div></div><strong>${money.format(balance(a.id))}</strong></div>`).join(''):'<p class="muted">Tap + Account to add your first account.</p>';
+ $('#accountsList').innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="account"><div><strong>${a.name}</strong><div class="tx-meta">${a.type}</div></div><div class="account-right"><strong>${money.format(balance(a.id))}</strong><button type="button" class="mini secondary" data-edit-account="${a.id}">Edit</button></div></div>`).join(''):'<p class="muted">Tap + Account to add your first account.</p>';
  let categoryHtml=state.categories.length?state.categories.map(c=>`<div class="category-chip"><span class="category-icon">${c.icon||'•'}</span><span>${c.name}</span><button type="button" class="category-delete" data-delete-category="${c.id}" aria-label="Delete ${c.name}">×</button></div>`).join(''):'<p class="muted">No spending categories yet.</p>';
  $('#homeCategoriesList').innerHTML=categoryHtml;
  $('#categoriesList').innerHTML=categoryHtml;
@@ -577,6 +578,7 @@ function categoryOptionHtml(selected){
 function accountOptionHtml(selected){
  return state.accounts.map(a=>`<option value="${a.id}" ${a.id===selected?'selected':''}>${escHtml(a.name)}</option>`).join('');
 }
+function openAccountEditor(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;open('editAccountModal');const f=$('#editAccountForm');f.elements.id.value=a.id;f.elements.name.value=a.name||'';f.elements.type.value=a.type||'Other';f.elements.currentBalance.value=Number(balance(a.id)).toFixed(2)}
 function openTransactionEditor(id){
  const t=state.transactions.find(x=>x.id===id);
  if(!t)return;
@@ -621,6 +623,7 @@ document.addEventListener('click',e=>{
  let op=e.target.closest('[data-open]');if(op){e.preventDefault();if(['incomeModal','expenseModal','transferModal','adjustmentModal'].includes(op.dataset.open)&&!state.accounts.length){alert('Please add an account first.');open('accountModal');return}open(op.dataset.open);return}
  let cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeDialog(cl);return}
 
+ let editAccount=e.target.closest('[data-edit-account]');if(editAccount){openAccountEditor(editAccount.dataset.editAccount);return}
  let editTx=e.target.closest('[data-edit-tx]');
  if(editTx){openTransactionEditor(editTx.dataset.editTx);return}
 
@@ -690,6 +693,7 @@ $('#ccSnapshotForm').onsubmit=e=>{
 $('#cardSettingsForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.creditCard={name:f.get('name').trim(),limit:Number(f.get('limit')||0)};save();closeDialog(e.target);renderCreditCard()};
 $('#ccPurchaseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),cur=f.get('currency'),foreign=Number(f.get('foreignAmount')||0),jmd=Number(f.get('jmdAmount'));state.ccPurchases.push({id:uid(),description:f.get('description').trim(),category:f.get('category'),owner:f.get('owner'),khadijahShare:Number(f.get('khadijahShare')||50),date:f.get('date'),jmdAmount:jmd,currency:cur,foreignAmount:cur==='JMD'?null:foreign,effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null});save();closeDialog(e.target);render()};
 $('#ccPaymentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),amt=Number(f.get('amount')),acct=f.get('accountId');state.ccPayments.push({id:uid(),owner:f.get('owner'),amount:amt,date:f.get('date'),accountId:acct||null});if(f.get('deductAccount')==='on'&&acct){state.transactions.push({id:uid(),type:'expense',description:'Credit Card Payment',category:'Transfer / Credit Card',amount:amt,accountId:acct,date:f.get('date'),ccPayment:true})}save();closeDialog(e.target);render()};
+$('#editAccountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),a=state.accounts.find(x=>x.id===f.get('id'));if(!a)return;let target=Number(f.get('currentBalance'));if(!Number.isFinite(target)){alert('Enter a valid current balance.');return}let old=Number(balance(a.id)),diff=target-old;a.name=f.get('name').trim();a.type=f.get('type');if(Math.abs(diff)>=0.005)state.transactions.push({id:uid(),type:'adjustment',description:'Balance adjustment',amount:Math.abs(diff),adjustmentDirection:diff>=0?'increase':'decrease',accountId:a.id,date:todayIso()});save();closeDialog(e.target);render()};
 $('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.accounts.push({id:uid(),name:f.get('name').trim(),type:f.get('type'),opening:Number(f.get('balance')),liquid:f.get('liquid')==='on'});save();closeDialog(e.target);render()};
 $('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
 $('#expenseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'expense',description:f.get('description').trim(),category:f.get('category'),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};

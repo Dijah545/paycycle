@@ -378,3 +378,5 @@ input:focus,select:focus,textarea:focus{
   color:#005a9e;
 }
 .snapshot-note span{font-size:.78rem}
+
+.account-right{display:flex;align-items:center;gap:10px}.account-right .mini{white-space:nowrap}
