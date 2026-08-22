@@ -235,3 +235,37 @@ input:focus,select:focus,textarea:focus{
   font-size:16px;
   cursor:pointer;
 }
+
+/* Unified tab icon system */
+.tabs .tab{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.tab-icon{
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+@media(max-width:700px){
+  .tabs .tab{
+    gap:3px;
+  }
+  .tab-icon{
+    width:21px;
+    height:21px;
+    flex-basis:21px;
+  }
+}
+
+.category-grid{display:flex;flex-wrap:wrap;gap:9px}
+.category-chip{display:flex;align-items:center;gap:7px;min-height:42px;padding:7px 9px 7px 8px;background:#f5faf7;border:1px solid #dbe7e1;border-radius:999px;font-size:.84rem;font-weight:700;color:#073b32}
+.category-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e5f4ee;font-size:.9rem}
+.category-delete{width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;display:grid;place-items:center;background:transparent;color:#61736d;font-size:1rem}
+.category-delete:hover{background:#fde7ec;color:#b9173f}
