@@ -346,3 +346,13 @@ input:focus,select:focus,textarea:focus{
   .tabs .tab{color:#dceefa;background:transparent}
   .tabs .tab.active{color:#fff;background:rgba(255,255,255,.15)}
 }
+
+.credit-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.credit-summary-grid>div,.owner-card{background:#f5f9fd;border:1px solid #d9e4ef;border-radius:16px;padding:14px}
+.credit-summary-grid span,.owner-card span,.owner-card small{display:block;color:#62758a;font-size:.78rem}
+.credit-summary-grid strong,.owner-card strong{display:block;margin-top:5px;font-size:1.08rem}
+.owner-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.owner-card em{display:block;margin-top:8px;color:#0078d4;font-style:normal;font-weight:800}
+.cc-actions{grid-template-columns:repeat(2,1fr)!important;max-width:520px}
+.fx-preview{padding:10px 12px;background:#f5f9fd;border:1px solid #d9e4ef;border-radius:10px;margin-top:8px}
+@media(max-width:700px){.credit-summary-grid{grid-template-columns:1fr 1fr}.owner-grid{grid-template-columns:1fr}}

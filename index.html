@@ -27,6 +27,11 @@
     <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 2v4M16 2v4M4 9h16"/><path d="m9 14 2 2 4-4"/></svg>
     <span>Plan</span>
   </button>
+
+  <button type="button" class="tab" data-page="credit">
+    <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>
+    <span>Credit Card</span>
+  </button>
   <button type="button" class="tab" data-page="insights">
     <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10"/><path d="M12 20V4"/><path d="M19 20v-7"/></svg>
     <span>Insights</span>
@@ -104,6 +109,58 @@
   <section class="card"><div class="section-title"><h2>Savings</h2><button type="button" data-open="fundModal">+ Fund</button></div><div id="planFundsList" class="list"></div></section>
 </section>
 
+
+<section id="credit" class="page">
+  <section class="period-bar card">
+    <button type="button" id="prevStatement" class="secondary icon-btn">‹</button>
+    <div class="period-center">
+      <span class="muted small">Credit Card Statement Period</span>
+      <select id="statementSelect"></select>
+    </div>
+    <button type="button" id="nextStatement" class="secondary icon-btn">›</button>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <div><p class="eyebrow">CREDIT CARD</p><h2 id="ccCardName">Scotia Credit Card</h2></div>
+      <button type="button" data-open="cardSettingsModal" class="secondary">Card Settings</button>
+    </div>
+    <div class="credit-summary-grid">
+      <div><span>Credit Limit</span><strong id="ccLimit">$0</strong></div>
+      <div><span>Statement Balance</span><strong id="ccStatementBalance">$0</strong></div>
+      <div><span>Payments Made</span><strong id="ccPayments">$0</strong></div>
+      <div><span>Statement Remaining</span><strong id="ccStatementRemaining">$0</strong></div>
+      <div><span>Current Balance</span><strong id="ccCurrentBalance">$0</strong></div>
+      <div><span>Available Credit</span><strong id="ccAvailable">$0</strong></div>
+      <div><span>Due Date</span><strong id="ccDueDate">—</strong></div>
+      <div><span>Days Until Due</span><strong id="ccDaysDue">—</strong></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Who Owes What</h2></div>
+    <div class="owner-grid">
+      <div class="owner-card"><span>Khadijah</span><strong id="ccKhadijahSpend">$0</strong><small>Paid: <b id="ccKhadijahPaid">$0</b></small><em id="ccKhadijahOwes">$0 remaining</em></div>
+      <div class="owner-card"><span>Mom</span><strong id="ccMomSpend">$0</strong><small>Paid: <b id="ccMomPaid">$0</b></small><em id="ccMomOwes">$0 remaining</em></div>
+    </div>
+  </section>
+
+  <section class="quick-actions action-cards cc-actions">
+    <button type="button" data-open="ccPurchaseModal"><span class="action-icon">＋</span><span><strong>Purchase</strong><small>Add card purchase</small></span></button>
+    <button type="button" data-open="ccPaymentModal"><span class="action-icon">✓</span><span><strong>Payment</strong><small>Record payment</small></span></button>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Statement Transactions</h2></div>
+    <div id="ccTransactionsList" class="list"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Foreign Currency Analysis</h2></div>
+    <div id="ccFxSummary" class="list"></div>
+  </section>
+</section>
+
 <section id="insights" class="page">
   <section class="card"><div class="section-title"><h2>Financial Summary</h2></div><div id="summaryMetrics" class="report-grid"></div></section>
   <section class="card"><div class="section-title"><h2>Spending by Category</h2></div><div id="categoryReport" class="list"></div></section>
@@ -147,6 +204,41 @@
 </form></dialog>
 
 
+
+
+<dialog id="cardSettingsModal"><form id="cardSettingsForm">
+  <h3>Credit Card Settings</h3>
+  <label>Card Name<input name="name" required value="Scotia Credit Card"></label>
+  <label>Credit Limit (JMD)<input name="limit" type="number" min="0" step="0.01" required></label>
+  <p class="muted small">Statement cycle: 5th through 4th. Due date: 30th, except February where the due date is the last day of February.</p>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save</button></div>
+</form></dialog>
+
+<dialog id="ccPurchaseModal"><form id="ccPurchaseForm">
+  <h3>Add Credit Card Purchase</h3>
+  <label>Description<input name="description" required placeholder="Amazon, groceries, etc."></label>
+  <label>Category<select name="category" required></select></label>
+  <label>Owner<select name="owner" required><option value="khadijah">Khadijah</option><option value="mom">Mom</option><option value="shared">Shared</option></select></label>
+  <label id="splitWrap" class="hidden">Khadijah Share %<input name="khadijahShare" type="number" min="0" max="100" value="50"></label>
+  <label>Transaction Date<input name="date" type="date" required></label>
+  <label>JMD Amount Charged<input name="jmdAmount" type="number" min="0.01" step="0.01" required></label>
+  <label>Currency<select name="currency"><option value="JMD">JMD only</option><option value="USD">USD</option><option value="CAD">CAD</option><option value="GBP">GBP</option><option value="EUR">EUR</option></select></label>
+  <div id="foreignAmountWrap" class="hidden">
+    <label>Foreign Amount<input name="foreignAmount" type="number" min="0.01" step="0.01"></label>
+    <div class="fx-preview">Effective rate: <strong id="effectiveRatePreview">—</strong></div>
+  </div>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Purchase</button></div>
+</form></dialog>
+
+<dialog id="ccPaymentModal"><form id="ccPaymentForm">
+  <h3>Record Credit Card Payment</h3>
+  <label>Paid By<select name="owner"><option value="khadijah">Khadijah</option><option value="mom">Mom</option></select></label>
+  <label>Amount<input name="amount" type="number" min="0.01" step="0.01" required></label>
+  <label>Date<input name="date" type="date" required></label>
+  <label>Payment Account<select name="accountId"></select></label>
+  <label class="inline-check"><input name="deductAccount" type="checkbox" checked>Deduct from selected bank account</label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Payment</button></div>
+</form></dialog>
 
 <dialog id="editTransactionModal"><form id="editTransactionForm">
   <h3>Edit Activity</h3>
@@ -197,9 +289,12 @@ const pad=n=>String(n).padStart(2,'0');
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const todayIso=()=>iso(new Date());
 
-let state={accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{}};
+let state={accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{},creditCard:{name:'Scotia Credit Card',limit:0},ccPurchases:[],ccPayments:[]};
 try{state=Object.assign(state,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!Array.isArray(state.categories)) state.categories=[];
+if(!state.creditCard) state.creditCard={name:'Scotia Credit Card',limit:0};
+if(!Array.isArray(state.ccPurchases)) state.ccPurchases=[];
+if(!Array.isArray(state.ccPayments)) state.ccPayments=[];
 if(state.categories.length===0){
   state.categories=[
     {id:uid(),name:'Groceries',icon:'🛒'},{id:uid(),name:'Dining Out',icon:'🍽️'},
@@ -238,12 +333,82 @@ function accountSelects(){
  $('#expenseForm select[name=category]').innerHTML=cats||'<option value="Other">Other</option>';
  let budgetSelect=$('#budgetForm select[name=category]');
  if(budgetSelect) budgetSelect.innerHTML=cats||'<option value="Other">Other</option>';
+ let ccCat=$('#ccPurchaseForm select[name=category]'); if(ccCat) ccCat.innerHTML=cats||'<option value="Other">Other</option>';
+ let ccPay=$('#ccPaymentForm select[name=accountId]'); if(ccPay) ccPay.innerHTML='<option value="">No linked account</option>'+opts;
 }
 function metrics(){
- let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+ let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense'&&!t.ccPayment).reduce((s,t)=>s+Number(t.amount),0);
  let assets=state.accounts.reduce((s,a)=>s+balance(a.id),0),liquid=state.accounts.filter(a=>a.liquid!==false).reduce((s,a)=>s+balance(a.id),0),reserved=state.funds.reduce((s,f)=>s+Number(f.amount),0);
  let unpaid=state.bills.reduce((s,b)=>s+(state.billPaid[iso(c.start)+'|'+b.id]?0:Number(b.amount)),0);
  return{c,tx,income,spent,assets,liquid,reserved,unpaid,free:liquid-reserved-unpaid}
+}
+
+let statementOffset=0;
+function statementCycle(off=statementOffset){
+  const now=new Date();
+  let base=new Date(now.getFullYear(),now.getMonth(),5,12);
+  if(now<base) base=new Date(now.getFullYear(),now.getMonth()-1,5,12);
+  const start=new Date(base.getFullYear(),base.getMonth()+off,5,12);
+  const end=new Date(start.getFullYear(),start.getMonth()+1,4,12);
+  const dueMonth=end.getMonth();
+  const dueYear=end.getFullYear();
+  const due=dueMonth===1?new Date(dueYear,2,0,12):new Date(dueYear,dueMonth,30,12);
+  return{start,end,due};
+}
+function ccInPeriod(ds,c){const d=new Date(ds+'T12:00:00');return d>=c.start&&d<=c.end}
+function renderStatementOptions(){
+  const s=$('#statementSelect'); if(!s)return;
+  s.innerHTML='';
+  for(let i=-12;i<=12;i++){
+    const c=statementCycle(i),o=document.createElement('option');
+    o.value=i;o.textContent=(i===0?'Current • ':'')+fmt(c.start)+' – '+fmt(c.end);
+    if(i===statementOffset)o.selected=true;s.appendChild(o);
+  }
+}
+function renderCreditCard(){
+  if(!$('#statementSelect'))return;
+  renderStatementOptions();
+  const c=statementCycle();
+  const purchases=state.ccPurchases.filter(x=>ccInPeriod(x.date,c));
+  const pays=state.ccPayments.filter(x=>ccInPeriod(x.date,c));
+  const stmt=purchases.reduce((s,x)=>s+Number(x.jmdAmount),0);
+  const payTotal=pays.reduce((s,x)=>s+Number(x.amount),0);
+  const current=Math.max(0,state.ccPurchases.reduce((s,x)=>s+Number(x.jmdAmount),0)-state.ccPayments.reduce((s,x)=>s+Number(x.amount),0));
+  const limit=Number(state.creditCard.limit||0);
+  $('#ccCardName').textContent=state.creditCard.name||'Scotia Credit Card';
+  $('#ccLimit').textContent=money.format(limit);
+  $('#ccStatementBalance').textContent=money.format(stmt);
+  $('#ccPayments').textContent=money.format(payTotal);
+  $('#ccStatementRemaining').textContent=money.format(Math.max(0,stmt-payTotal));
+  $('#ccCurrentBalance').textContent=money.format(current);
+  $('#ccAvailable').textContent=money.format(Math.max(0,limit-current));
+  $('#ccDueDate').textContent=fmt(c.due);
+  const td=new Date();td.setHours(12,0,0,0);
+  $('#ccDaysDue').textContent=Math.max(0,Math.ceil((c.due-td)/86400000))+' days';
+
+  let kh=0,mo=0;
+  purchases.forEach(x=>{
+    const a=Number(x.jmdAmount);
+    if(x.owner==='khadijah')kh+=a;
+    else if(x.owner==='mom')mo+=a;
+    else{const k=Number(x.khadijahShare||50)/100;kh+=a*k;mo+=a*(1-k)}
+  });
+  const khp=pays.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount),0);
+  const mop=pays.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount),0);
+  $('#ccKhadijahSpend').textContent=money.format(kh);$('#ccMomSpend').textContent=money.format(mo);
+  $('#ccKhadijahPaid').textContent=money.format(khp);$('#ccMomPaid').textContent=money.format(mop);
+  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,kh-khp))+' remaining';
+  $('#ccMomOwes').textContent=money.format(Math.max(0,mo-mop))+' remaining';
+
+  $('#ccTransactionsList').innerHTML=purchases.length?purchases.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+    const owner=x.owner==='shared'?`Shared ${x.khadijahShare||50}/${100-Number(x.khadijahShare||50)}`:x.owner==='mom'?'Mom':'Khadijah';
+    const fx=x.currency!=='JMD'&&x.foreignAmount?` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate).toFixed(2)}`:'';
+    return `<div class="tx"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div></div><strong class="negative">${money.format(x.jmdAmount)}</strong></div>`
+  }).join(''):'<p class="muted">No credit card purchases in this statement.</p>';
+
+  const fx={};
+  purchases.filter(x=>x.currency&&x.currency!=='JMD'&&x.foreignAmount).forEach(x=>{if(!fx[x.currency])fx[x.currency]={f:0,j:0};fx[x.currency].f+=Number(x.foreignAmount);fx[x.currency].j+=Number(x.jmdAmount)});
+  $('#ccFxSummary').innerHTML=Object.keys(fx).length?Object.entries(fx).map(([cur,v])=>`<div class="report-row"><span>${cur}</span><span>${cur} ${v.f.toFixed(2)}</span><strong>${money.format(v.j)} • Avg ${(v.j/v.f).toFixed(2)} JMD/${cur}</strong></div>`).join(''):'<p class="muted">No foreign-currency purchases in this statement.</p>';
 }
 function render(){
  options();accountSelects();let m=metrics();
@@ -285,11 +450,18 @@ function render(){
  </div>`
 }).join(''):'<p class="muted">No transactions in this period.</p>';
  $('#summaryMetrics').innerHTML=`<div class="metric"><span>Income</span><strong>${money.format(m.income)}</strong></div><div class="metric"><span>Spent</span><strong>${money.format(m.spent)}</strong></div><div class="metric"><span>Net Cash Flow</span><strong>${money.format(m.income-m.spent)}</strong></div><div class="metric"><span>Free to Spend</span><strong>${money.format(m.free)}</strong></div>`;
- let cats={};m.tx.filter(t=>t.type==='expense').forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
+ let cats={};m.tx.filter(t=>t.type==='expense'&&!t.ccPayment).forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
  let max=Math.max(m.income,m.spent,1);$('#incomeBar').style.height=Math.max(3,m.income/max*100)+'%';$('#expenseBar').style.height=Math.max(3,m.spent/max*100)+'%';$('#incomeBarValue').textContent=money.format(m.income);$('#expenseBarValue').textContent=money.format(m.spent);$('#donutTotal').textContent=money.format(m.spent);
  let palette=['#008b68','#e71d4f','#1769e0','#5b35d5','#ff8a00','#6b7280'],entries=Object.entries(cats),cur=0,parts=[],leg=[];entries.forEach(([k,v],i)=>{let p=m.spent?v/m.spent*100:0,end=cur+p,col=palette[i%palette.length];parts.push(`${col} ${cur}% ${end}%`);leg.push(`<div class="legend-item"><i class="legend-dot" style="background:${col}"></i><span>${k}</span><strong>${Math.round(p)}%</strong></div>`);cur=end});$('#spendDonut').style.background=entries.length?`conic-gradient(${parts.join(',')})`:'#e2e8f0';$('#donutLegend').innerHTML=leg.join('')||'<p class="muted small">No expenses yet.</p>';
+ renderCreditCard();
 }
-function open(id){let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');if(f){f.reset();d.querySelectorAll('input[type=date]').forEach(x=>x.value=todayIso())}if(d.showModal)d.showModal();else d.setAttribute('open','')}
+function open(id){
+ let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');
+ if(f){f.reset();d.querySelectorAll('input[type=date]').forEach(x=>x.value=todayIso())}
+ if(id==='cardSettingsModal'){f.elements.name.value=state.creditCard.name||'Scotia Credit Card';f.elements.limit.value=state.creditCard.limit||0}
+ if(id==='ccPurchaseModal'){$('#foreignAmountWrap').classList.add('hidden');$('#splitWrap').classList.add('hidden');$('#effectiveRatePreview').textContent='—'}
+ if(d.showModal)d.showModal();else d.setAttribute('open','')
+}
 function closeDialog(el){let d=el.closest('dialog');if(d){if(d.close)d.close();else d.removeAttribute('open')}}
 
 function escHtml(value){
@@ -370,6 +542,18 @@ document.addEventListener('click',e=>{
 });
 $('#periodSelect').addEventListener('change',e=>{periodOffset=Number(e.target.value);render()});$('#prevPeriod').onclick=()=>{periodOffset=Math.max(-18,periodOffset-1);render()};$('#nextPeriod').onclick=()=>{periodOffset=Math.min(12,periodOffset+1);render()};
 $('#typeFilter').onchange=render;$('#searchTx').oninput=render;
+$('#statementSelect').onchange=e=>{statementOffset=Number(e.target.value);renderCreditCard()};
+$('#prevStatement').onclick=()=>{statementOffset=Math.max(-12,statementOffset-1);renderCreditCard()};
+$('#nextStatement').onclick=()=>{statementOffset=Math.min(12,statementOffset+1);renderCreditCard()};
+function updateFxPreview(){let f=$('#ccPurchaseForm'),cur=f.elements.currency.value,j=Number(f.elements.jmdAmount.value),x=Number(f.elements.foreignAmount.value);$('#effectiveRatePreview').textContent=(cur!=='JMD'&&j>0&&x>0)?(j/x).toFixed(4)+' JMD/'+cur:'—'}
+$('#ccPurchaseForm select[name=currency]').onchange=e=>{$('#foreignAmountWrap').classList.toggle('hidden',e.target.value==='JMD');updateFxPreview()};
+$('#ccPurchaseForm select[name=owner]').onchange=e=>$('#splitWrap').classList.toggle('hidden',e.target.value!=='shared');
+$('#ccPurchaseForm input[name=jmdAmount]').oninput=updateFxPreview;
+$('#ccPurchaseForm input[name=foreignAmount]').oninput=updateFxPreview;
+
+$('#cardSettingsForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.creditCard={name:f.get('name').trim(),limit:Number(f.get('limit')||0)};save();closeDialog(e.target);renderCreditCard()};
+$('#ccPurchaseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),cur=f.get('currency'),foreign=Number(f.get('foreignAmount')||0),jmd=Number(f.get('jmdAmount'));state.ccPurchases.push({id:uid(),description:f.get('description').trim(),category:f.get('category'),owner:f.get('owner'),khadijahShare:Number(f.get('khadijahShare')||50),date:f.get('date'),jmdAmount:jmd,currency:cur,foreignAmount:cur==='JMD'?null:foreign,effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null});save();closeDialog(e.target);render()};
+$('#ccPaymentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),amt=Number(f.get('amount')),acct=f.get('accountId');state.ccPayments.push({id:uid(),owner:f.get('owner'),amount:amt,date:f.get('date'),accountId:acct||null});if(f.get('deductAccount')==='on'&&acct){state.transactions.push({id:uid(),type:'expense',description:'Credit Card Payment',category:'Transfer / Credit Card',amount:amt,accountId:acct,date:f.get('date'),ccPayment:true})}save();closeDialog(e.target);render()};
 $('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.accounts.push({id:uid(),name:f.get('name').trim(),type:f.get('type'),opening:Number(f.get('balance')),liquid:f.get('liquid')==='on'});save();closeDialog(e.target);render()};
 $('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
 $('#expenseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'expense',description:f.get('description').trim(),category:f.get('category'),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
