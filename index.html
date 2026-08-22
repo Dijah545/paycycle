@@ -109,6 +109,13 @@
   <section class="card"><div class="section-title"><h2>Spending Categories</h2><button type="button" data-open="categoryModal">+ Category</button></div><p class="muted small">Create categories independently of budget limits.</p><div id="categoriesList" class="category-grid"></div></section>
   <section class="card"><div class="section-title"><h2>Budget Plan</h2><button type="button" data-open="budgetModal">+ Budget</button></div><div id="planBudgetsList" class="list"></div></section>
   <section class="card"><div class="section-title"><h2>Upcoming Bills</h2><button type="button" data-open="billModal">+ Bill</button></div><div id="planBillsList" class="list"></div></section>
+
+  <section class="card">
+    <div class="section-title"><div><p class="eyebrow">LIABILITIES</p><h2>Debt & Loans</h2></div><button type="button" data-open="debtModal">+ Loan</button></div>
+    <p class="muted small">Track balances, regular payments and due dates for loans.</p>
+    <div id="debtsList" class="list"></div>
+  </section>
+
   <section class="card">
     <div class="section-title"><div><p class="eyebrow">LONG-TERM</p><h2>High-Yield Savings</h2></div><button type="button" data-open="fundModal">+ Deposit</button></div>
     <p class="muted small">Money saved here is for the future. It is tracked separately and is not included in Free to Spend.</p>
@@ -197,12 +204,60 @@
 </section>
 
 <section id="settings" class="page">
+  <section class="card">
+    <div class="section-title"><h2>Appearance</h2></div>
+    <label class="theme-toggle">
+      <span>
+        <strong>Dark Mode</strong>
+        <small class="muted">Use a darker colour scheme for the app.</small>
+      </span>
+      <input id="darkModeToggle" type="checkbox" role="switch" aria-label="Dark mode">
+    </label>
+  </section>
+
   <section class="card"><div class="section-title"><h2>Pay Cycle</h2></div><p><strong>Payday:</strong> 25th of each month</p><p class="muted small">If the 25th is a weekend or Jamaican public holiday, payday moves back to the preceding business day.</p></section>
   <section class="card"><div class="section-title"><h2>Data</h2></div><div class="row wrap"><button type="button" id="exportData">Export Backup</button><label class="file-button secondary">Restore Backup<input id="importData" type="file" accept=".json"></label><button type="button" id="resetData" class="danger">Reset App</button></div></section>
 </section>
 </main>
 
 <!-- dialogs -->
+
+<dialog id="debtModal"><form id="debtForm">
+  <h3>Add Loan / Debt</h3>
+  <label>Name<input name="name" required placeholder="Car Loan, Student Loan, etc."></label>
+  <label>Lender<input name="lender" placeholder="Bank / Institution"></label>
+  <label>Original Amount<input name="originalAmount" type="number" min="0" step="0.01" required></label>
+  <label>Current Balance<input name="currentBalance" type="number" min="0" step="0.01" required></label>
+  <label>Regular Payment<input name="paymentAmount" type="number" min="0" step="0.01"></label>
+  <label>Interest Rate %<input name="interestRate" type="number" min="0" step="0.01"></label>
+  <label>Next Due Date<input name="dueDate" type="date"></label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Loan</button></div>
+</form></dialog>
+
+<dialog id="editDebtModal"><form id="editDebtForm">
+  <h3>Edit Loan / Debt</h3>
+  <input type="hidden" name="id">
+  <label>Name<input name="name" required></label>
+  <label>Lender<input name="lender"></label>
+  <label>Original Amount<input name="originalAmount" type="number" min="0" step="0.01" required></label>
+  <label>Current Balance<input name="currentBalance" type="number" min="0" step="0.01" required></label>
+  <label>Regular Payment<input name="paymentAmount" type="number" min="0" step="0.01"></label>
+  <label>Interest Rate %<input name="interestRate" type="number" min="0" step="0.01"></label>
+  <label>Next Due Date<input name="dueDate" type="date"></label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Changes</button></div>
+</form></dialog>
+
+<dialog id="debtPaymentModal"><form id="debtPaymentForm">
+  <h3>Record Loan Payment</h3>
+  <input type="hidden" name="debtId">
+  <p id="debtPaymentName" class="muted small"></p>
+  <label>Amount Paid<input name="amount" type="number" min="0.01" step="0.01" required></label>
+  <label>Date<input name="date" type="date" required></label>
+  <label>Paid From<select name="accountId"></select></label>
+  <label class="inline-check"><input name="deductAccount" type="checkbox" checked>Deduct from selected account</label>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Payment</button></div>
+</form></dialog>
+
 <dialog id="editAccountModal"><form id="editAccountForm"><h3>Edit Account</h3><input type="hidden" name="id"><label>Account Name<input name="name" required></label><label>Account Type<select name="type"><option>Chequing</option><option>Savings</option><option>Cash</option><option>Digital Wallet</option><option>Other</option></select></label><label>Current Balance<input name="currentBalance" type="number" step="0.01" required><span class="field-help">Changing this adjusts the balance without deleting your transaction history.</span></label><div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Changes</button></div></form></dialog>
 <dialog id="accountModal"><form id="accountForm">
   <h3>Add Account</h3><label>Name<input name="name" required placeholder="JN Bank"></label><label>Type<select name="type"><option>Bank</option><option>Savings</option><option>Cash</option><option>Wallet</option></select></label><label>Existing / Opening Balance
@@ -392,13 +447,15 @@ const pad=n=>String(n).padStart(2,'0');
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const todayIso=()=>iso(new Date());
 
-let state={accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{},creditCard:{name:'Scotia Credit Card',limit:0},ccPurchases:[],ccPayments:[],ccSnapshot:null,ccSnapshot:null};
+let state={accounts:[],transactions:[],categories:[],budgets:[],bills:[],funds:[],billPaid:{},creditCard:{name:'Scotia Credit Card',limit:0},ccPurchases:[],ccPayments:[],ccSnapshot:null,debts:[],debtPayments:[],ccSnapshot:null};
 try{state=Object.assign(state,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!Array.isArray(state.categories)) state.categories=[];
 if(!state.creditCard) state.creditCard={name:'Scotia Credit Card',limit:0};
 if(!Array.isArray(state.ccPurchases)) state.ccPurchases=[];
 if(!Array.isArray(state.ccPayments)) state.ccPayments=[];
 if(state.ccSnapshot===undefined) state.ccSnapshot=null;
+if(!Array.isArray(state.debts)) state.debts=[];
+if(!Array.isArray(state.debtPayments)) state.debtPayments=[];
 if(state.categories.length===0){
   state.categories=[
     {id:uid(),name:'Groceries',icon:'🛒'},{id:uid(),name:'Dining Out',icon:'🍽️'},
@@ -409,6 +466,16 @@ if(state.categories.length===0){
   save();
 }
 let periodOffset=0;
+
+const THEME_KEY='khadijah-budget-theme';
+function applyTheme(theme){
+  document.documentElement.dataset.theme=theme;
+  const toggle=$('#darkModeToggle');
+  if(toggle)toggle.checked=theme==='dark';
+}
+let savedTheme=localStorage.getItem(THEME_KEY)||'light';
+applyTheme(savedTheme);
+
 
 function easter(y){let a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31)-1,da=(h+l-7*m+114)%31+1;return new Date(y,mo,da,12)}
 function addDays(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
@@ -433,6 +500,7 @@ function options(){
 function accountSelects(){
  let opts=state.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
  $$('select[name=accountId],select[name=from],select[name=to]').forEach(s=>s.innerHTML=opts);
+ let debtPayAccount=$('#debtPaymentForm select[name=accountId]'); if(debtPayAccount) debtPayAccount.innerHTML='<option value="">No linked account</option>'+opts;
  let fundAccount=$('#fundForm select[name=accountId]'); if(fundAccount) fundAccount.innerHTML='<option value="">Do not link to account</option>'+opts;
  let cats=state.categories.map(c=>`<option value="${c.name}">${c.icon||'•'} ${c.name}</option>`).join('');
  $('#expenseForm select[name=category]').innerHTML=cats||'<option value="Other">Other</option>';
@@ -442,7 +510,7 @@ function accountSelects(){
  let ccPay=$('#ccPaymentForm select[name=accountId]'); if(ccPay) ccPay.innerHTML='<option value="">No linked account</option>'+opts;
 }
 function metrics(){
- let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense'&&!t.ccPayment).reduce((s,t)=>s+Number(t.amount),0);
+ let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense'&&!t.ccPayment&&!t.debtPayment).reduce((s,t)=>s+Number(t.amount),0);
  let assets=state.accounts.reduce((s,a)=>s+balance(a.id),0),liquid=state.accounts.filter(a=>a.liquid!==false).reduce((s,a)=>s+balance(a.id),0),reserved=state.funds.reduce((s,f)=>s+Number(f.amount),0);
  let unpaid=state.bills.reduce((s,b)=>s+(state.billPaid[iso(c.start)+'|'+b.id]?0:Number(b.amount)),0);
  return{c,tx,income,spent,assets,liquid,reserved,unpaid,free:liquid-unpaid}
@@ -587,6 +655,65 @@ function renderCreditCard(){
   purchases.filter(x=>x.currency&&x.currency!=='JMD'&&x.foreignAmount).forEach(x=>{if(!fx[x.currency])fx[x.currency]={f:0,j:0};fx[x.currency].f+=Number(x.foreignAmount);fx[x.currency].j+=Number(x.jmdAmount)});
   $('#ccFxSummary').innerHTML=Object.keys(fx).length?Object.entries(fx).map(([cur,v])=>`<div class="report-row"><span>${cur}</span><span>${cur} ${v.f.toFixed(2)}</span><strong>${money.format(v.j)} • Avg ${(v.j/v.f).toFixed(2)} JMD/${cur}</strong></div>`).join(''):'<p class="muted">No foreign-currency purchases in this statement.</p>';
 }
+
+function renderDebts(){
+  const list=$('#debtsList');
+  if(!list)return;
+
+  if(!state.debts.length){
+    list.innerHTML='<p class="muted">No loans or debts added yet.</p>';
+    return;
+  }
+
+  list.innerHTML=state.debts.map(d=>{
+    const original=Number(d.originalAmount||0);
+    const current=Number(d.currentBalance||0);
+    const paid=Math.max(0,original-current);
+    const pct=original>0?Math.min(100,(paid/original)*100):0;
+    const due=d.dueDate?d.dueDate:'No due date';
+
+    return `<div class="debt-row">
+      <div class="debt-main">
+        <div class="row"><strong>${d.name}</strong><span>${money.format(current)} remaining</span></div>
+        <div class="tx-meta">${d.lender||'No lender'}${d.interestRate?` • ${Number(d.interestRate).toFixed(2)}%` : ''}${d.paymentAmount?` • Payment ${money.format(d.paymentAmount)}`:''} • Due ${due}</div>
+        <div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="tx-meta">${money.format(paid)} paid of ${money.format(original)}</div>
+      </div>
+      <div class="item-actions">
+        <button type="button" class="mini success" data-pay-debt="${d.id}">Payment</button>
+        <button type="button" class="mini secondary" data-edit-debt="${d.id}">Edit</button>
+        <button type="button" class="mini danger" data-delete-debt="${d.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDebtEditor(id){
+  const d=state.debts.find(x=>x.id===id);
+  if(!d)return;
+  open('editDebtModal');
+  const f=$('#editDebtForm');
+  f.elements.id.value=d.id;
+  f.elements.name.value=d.name||'';
+  f.elements.lender.value=d.lender||'';
+  f.elements.originalAmount.value=d.originalAmount||0;
+  f.elements.currentBalance.value=d.currentBalance||0;
+  f.elements.paymentAmount.value=d.paymentAmount||'';
+  f.elements.interestRate.value=d.interestRate||'';
+  f.elements.dueDate.value=d.dueDate||'';
+}
+
+function openDebtPayment(id){
+  const d=state.debts.find(x=>x.id===id);
+  if(!d)return;
+  open('debtPaymentModal');
+  const f=$('#debtPaymentForm');
+  f.elements.debtId.value=d.id;
+  f.elements.amount.value=d.paymentAmount||'';
+  f.elements.date.value=todayIso();
+  $('#debtPaymentName').textContent=`${d.name} • Current balance ${money.format(d.currentBalance||0)}`;
+}
+
 function render(){
  options();accountSelects();let m=metrics();
  $('#cycleLabel').textContent=fmt(m.c.start)+' – '+fmt(m.c.end);$('#freeToSpend').textContent=money.format(m.free);$('#totalPosition').textContent=money.format(m.assets);$('#incomeTotal').textContent=money.format(m.income);$('#spentTotal').textContent=money.format(m.spent);$('#billsTotal').textContent=money.format(m.unpaid);$('#reservedTotal').textContent=money.format(m.reserved);
@@ -637,10 +764,11 @@ function render(){
  </div>`
 }).join(''):'<p class="muted">No transactions in this period.</p>';
  $('#summaryMetrics').innerHTML=`<div class="metric"><span>Income</span><strong>${money.format(m.income)}</strong></div><div class="metric"><span>Spent</span><strong>${money.format(m.spent)}</strong></div><div class="metric"><span>Net Cash Flow</span><strong>${money.format(m.income-m.spent)}</strong></div><div class="metric"><span>Free to Spend</span><strong>${money.format(m.free)}</strong></div>`;
- let cats={};m.tx.filter(t=>t.type==='expense'&&!t.ccPayment).forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
+ let cats={};m.tx.filter(t=>t.type==='expense'&&!t.ccPayment&&!t.debtPayment).forEach(t=>cats[t.category||'Uncategorised']=(cats[t.category||'Uncategorised']||0)+Number(t.amount));$('#categoryReport').innerHTML=Object.entries(cats).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${money.format(v)}</strong></div>`).join('')||'<p class="muted">No spending yet.</p>';
  let max=Math.max(m.income,m.spent,1);$('#incomeBar').style.height=Math.max(3,m.income/max*100)+'%';$('#expenseBar').style.height=Math.max(3,m.spent/max*100)+'%';$('#incomeBarValue').textContent=money.format(m.income);$('#expenseBarValue').textContent=money.format(m.spent);$('#donutTotal').textContent=money.format(m.spent);
  let palette=['#008b68','#e71d4f','#1769e0','#5b35d5','#ff8a00','#6b7280'],entries=Object.entries(cats),cur=0,parts=[],leg=[];entries.forEach(([k,v],i)=>{let p=m.spent?v/m.spent*100:0,end=cur+p,col=palette[i%palette.length];parts.push(`${col} ${cur}% ${end}%`);leg.push(`<div class="legend-item"><i class="legend-dot" style="background:${col}"></i><span>${k}</span><strong>${Math.round(p)}%</strong></div>`);cur=end});$('#spendDonut').style.background=entries.length?`conic-gradient(${parts.join(',')})`:'#e2e8f0';$('#donutLegend').innerHTML=leg.join('')||'<p class="muted small">No expenses yet.</p>';
  renderCreditCard();
+ renderDebts();
 }
 function open(id){
  let d=document.getElementById(id);if(!d)return;let f=d.querySelector('form');
@@ -733,6 +861,24 @@ document.addEventListener('click',e=>{
    }
    return;
  }
+
+ let payDebt=e.target.closest('[data-pay-debt]');
+ if(payDebt){openDebtPayment(payDebt.dataset.payDebt);return}
+
+ let editDebt=e.target.closest('[data-edit-debt]');
+ if(editDebt){openDebtEditor(editDebt.dataset.editDebt);return}
+
+ let deleteDebt=e.target.closest('[data-delete-debt]');
+ if(deleteDebt){
+   const d=state.debts.find(x=>x.id===deleteDebt.dataset.deleteDebt);
+   if(d&&confirm(`Delete ${d.name}?`)){
+     state.debts=state.debts.filter(x=>x.id!==d.id);
+     state.debtPayments=state.debtPayments.filter(x=>x.debtId!==d.id);
+     save();render();
+   }
+   return;
+ }
+
  let editAccount=e.target.closest('[data-edit-account]');if(editAccount){openAccountEditor(editAccount.dataset.editAccount);return}
  let editTx=e.target.closest('[data-edit-tx]');
  if(editTx){openTransactionEditor(editTx.dataset.editTx);return}
@@ -758,7 +904,8 @@ document.addEventListener('click',e=>{
  let tab=e.target.closest('[data-page]');if(tab){$$('.tab').forEach(x=>x.classList.remove('active'));$$('.page').forEach(x=>x.classList.remove('active'));tab.classList.add('active');$('#'+tab.dataset.page).classList.add('active');window.scrollTo(0,0)}
 });
 $('#periodSelect').addEventListener('change',e=>{periodOffset=Number(e.target.value);render()});$('#prevPeriod').onclick=()=>{periodOffset=Math.max(-18,periodOffset-1);render()};$('#nextPeriod').onclick=()=>{periodOffset=Math.min(12,periodOffset+1);render()};
-$('#typeFilter').onchange=render;$('#searchTx').oninput=render;
+$('#typeFilter').onchange=render;
+$('#darkModeToggle').onchange=e=>{const theme=e.target.checked?'dark':'light';localStorage.setItem(THEME_KEY,theme);applyTheme(theme)};$('#searchTx').oninput=render;
 $('#statementSelect').onchange=e=>{statementOffset=Number(e.target.value);renderCreditCard()};
 $('#prevStatement').onclick=()=>{statementOffset=Math.max(-12,statementOffset-1);renderCreditCard()};
 $('#nextStatement').onclick=()=>{statementOffset=Math.min(12,statementOffset+1);renderCreditCard()};
@@ -820,6 +967,75 @@ $('#editSavingForm').onsubmit=e=>{
  s.date=f.get('date');
  save();closeDialog(e.target);render();
 };
+
+$('#debtForm').onsubmit=e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  state.debts.push({
+    id:uid(),
+    name:f.get('name').trim(),
+    lender:f.get('lender').trim(),
+    originalAmount:Number(f.get('originalAmount')),
+    currentBalance:Number(f.get('currentBalance')),
+    paymentAmount:Number(f.get('paymentAmount')||0),
+    interestRate:Number(f.get('interestRate')||0),
+    dueDate:f.get('dueDate')||''
+  });
+  save();closeDialog(e.target);render();
+};
+
+$('#editDebtForm').onsubmit=e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const d=state.debts.find(x=>x.id===f.get('id'));
+  if(!d)return;
+  d.name=f.get('name').trim();
+  d.lender=f.get('lender').trim();
+  d.originalAmount=Number(f.get('originalAmount'));
+  d.currentBalance=Number(f.get('currentBalance'));
+  d.paymentAmount=Number(f.get('paymentAmount')||0);
+  d.interestRate=Number(f.get('interestRate')||0);
+  d.dueDate=f.get('dueDate')||'';
+  save();closeDialog(e.target);render();
+};
+
+$('#debtPaymentForm').onsubmit=e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const d=state.debts.find(x=>x.id===f.get('debtId'));
+  if(!d)return;
+
+  const amount=Number(f.get('amount'));
+  if(!Number.isFinite(amount)||amount<=0){alert('Enter a valid payment amount.');return}
+
+  const actual=Math.min(amount,Number(d.currentBalance||0));
+  d.currentBalance=Math.max(0,Number(d.currentBalance||0)-actual);
+
+  state.debtPayments.push({
+    id:uid(),
+    debtId:d.id,
+    amount:actual,
+    date:f.get('date'),
+    accountId:f.get('accountId')||null
+  });
+
+  const accountId=f.get('accountId');
+  if(f.get('deductAccount')==='on'&&accountId){
+    state.transactions.push({
+      id:uid(),
+      type:'expense',
+      description:`Loan Payment - ${d.name}`,
+      category:'Debt Payment',
+      amount:actual,
+      accountId:accountId,
+      date:f.get('date'),
+      debtPayment:true
+    });
+  }
+
+  save();closeDialog(e.target);render();
+};
+
 $('#editAccountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),a=state.accounts.find(x=>x.id===f.get('id'));if(!a)return;let target=Number(f.get('currentBalance'));if(!Number.isFinite(target)){alert('Enter a valid current balance.');return}let old=Number(balance(a.id)),diff=target-old;a.name=f.get('name').trim();a.type=f.get('type');if(Math.abs(diff)>=0.005)state.transactions.push({id:uid(),type:'adjustment',description:'Balance adjustment',amount:Math.abs(diff),adjustmentDirection:diff>=0?'increase':'decrease',accountId:a.id,date:todayIso()});save();closeDialog(e.target);render()};
 $('#accountForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.accounts.push({id:uid(),name:f.get('name').trim(),type:f.get('type'),opening:Number(f.get('balance')),liquid:f.get('liquid')==='on'});save();closeDialog(e.target);render()};
 $('#incomeForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.transactions.push({id:uid(),type:'income',description:f.get('description').trim(),amount:Number(f.get('amount')),accountId:f.get('accountId'),date:f.get('date')});save();closeDialog(e.target);render()};
