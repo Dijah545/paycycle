@@ -191,6 +191,11 @@
     <div class="section-title"><h2>Statement Transactions</h2></div>
     <div id="ccTransactionsList" class="list"></div>
   </section>
+  <section class="card">
+    <div class="section-title"><h2>Credit Card Payments</h2></div>
+    <p class="muted small">Payments recorded here reduce the card balance and the amount owed by the selected person.</p>
+    <div id="ccPaymentsList" class="list"></div>
+  </section>
 
   <section class="card">
     <div class="section-title"><h2>Foreign Currency Analysis</h2></div>
@@ -361,6 +366,31 @@
   <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Purchase</button></div>
 </form></dialog>
 
+
+<dialog id="editCcPaymentModal"><form id="editCcPaymentForm">
+  <h3>Edit Credit Card Payment</h3>
+  <input type="hidden" name="id">
+  <label>Paid By
+    <select name="owner">
+      <option value="khadijah">Khadijah</option>
+      <option value="mom">Mom</option>
+    </select>
+  </label>
+  <label>Amount
+    <input name="amount" type="number" min="0.01" step="0.01" required>
+  </label>
+  <label>Date
+    <input name="date" type="date" required>
+  </label>
+  <label>Payment Account
+    <select name="accountId"></select>
+  </label>
+  <div class="row">
+    <button type="button" data-close class="secondary">Cancel</button>
+    <button type="submit">Save Changes</button>
+  </div>
+</form></dialog>
+
 <dialog id="ccPaymentModal"><form id="ccPaymentForm">
   <h3>Record Credit Card Payment</h3>
   <label>Paid By<select name="owner"><option value="khadijah">Khadijah</option><option value="mom">Mom</option></select></label>
@@ -508,6 +538,7 @@ function accountSelects(){
  if(budgetSelect) budgetSelect.innerHTML=cats||'<option value="Other">Other</option>';
  let ccCat=$('#ccPurchaseForm select[name=category]'); if(ccCat) ccCat.innerHTML=cats||'<option value="Other">Other</option>';
  let ccPay=$('#ccPaymentForm select[name=accountId]'); if(ccPay) ccPay.innerHTML='<option value="">No linked account</option>'+opts;
+ let editCcPay=$('#editCcPaymentForm select[name=accountId]'); if(editCcPay) editCcPay.innerHTML='<option value="">No linked account</option>'+opts;
 }
 function metrics(){
  let c=cycle(),tx=state.transactions.filter(t=>inCycle(t.date,c)),income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0),spent=tx.filter(t=>t.type==='expense'&&!t.ccPayment&&!t.debtPayment).reduce((s,t)=>s+Number(t.amount),0);
@@ -540,70 +571,82 @@ function renderStatementOptions(){
 }
 function renderCreditCard(){
   if(!$('#statementSelect'))return;
+
   renderStatementOptions();
   const c=statementCycle();
+
   const purchases=state.ccPurchases.filter(x=>ccInPeriod(x.date,c));
   const pays=state.ccPayments.filter(x=>ccInPeriod(x.date,c));
-  const snapshot=state.ccSnapshot;
-  const snapDate=snapshot?.asOfDate||null;
-
-  // Only post-snapshot activity changes the opening values.
-  const purchasesAfterSnapshot=state.ccPurchases.filter(x=>!snapDate||x.date>snapDate);
-  const paymentsAfterSnapshot=state.ccPayments.filter(x=>!snapDate||x.date>snapDate);
-
-  const openingStatement=Number(snapshot?.statementBalance||0);
-  const openingStatementPayments=Number(snapshot?.statementPayments||0);
-  const openingCurrent=Number(snapshot?.currentBalance||0);
-
-  // For the statement containing the snapshot, start from the imported statement position.
+  const snapshot=state.ccSnapshot||null;
   const snapshotInThisStatement=snapshot&&ccInPeriod(snapshot.asOfDate,c);
-  const stmtNewPurchases=snapshotInThisStatement
-    ? purchases.filter(x=>x.date>snapshot.asOfDate).reduce((s,x)=>s+Number(x.jmdAmount),0)
-    : purchases.reduce((s,x)=>s+Number(x.jmdAmount),0);
 
-  const stmt=snapshotInThisStatement ? openingStatement + stmtNewPurchases : purchases.reduce((s,x)=>s+Number(x.jmdAmount),0);
+  // --- Statement balance ---
+  // Snapshot provides the opening statement position for an already-active card.
+  // New purchases entered after the snapshot are added to that opening amount.
+  const openingStatement=snapshotInThisStatement?Number(snapshot.statementBalance||0):0;
+  const openingStatementPayments=snapshotInThisStatement?Number(snapshot.statementPayments||0):0;
 
-  const newStatementPayments=snapshotInThisStatement
-    ? pays.filter(x=>x.date>snapshot.asOfDate).reduce((s,x)=>s+Number(x.amount),0)
-    : pays.reduce((s,x)=>s+Number(x.amount),0);
+  const statementPurchasesAfterSnapshot=snapshotInThisStatement
+    ? purchases.filter(x=>x.date>snapshot.asOfDate)
+    : purchases;
 
-  const payTotal=snapshotInThisStatement ? openingStatementPayments + newStatementPayments : newStatementPayments;
+  const statementPaymentsAfterSnapshot=snapshotInThisStatement
+    ? pays.filter(x=>x.date>snapshot.asOfDate)
+    : pays;
 
-  const current=Math.max(
+  const statementPurchasesTotal=statementPurchasesAfterSnapshot.reduce((s,x)=>s+Number(x.jmdAmount||0),0);
+  const statementPaymentsNew=statementPaymentsAfterSnapshot.reduce((s,x)=>s+Number(x.amount||0),0);
+
+  const statementBalance=openingStatement+statementPurchasesTotal;
+  const paymentsMade=openingStatementPayments+statementPaymentsNew;
+  const statementRemaining=Math.max(0,statementBalance-paymentsMade);
+
+  // --- Current balance ---
+  // Opening current balance + all purchases after snapshot - all payments after snapshot.
+  const openingCurrent=snapshot?Number(snapshot.currentBalance||0):0;
+  const allPurchasesAfterSnapshot=snapshot
+    ? state.ccPurchases.filter(x=>x.date>snapshot.asOfDate)
+    : state.ccPurchases;
+  const allPaymentsAfterSnapshot=snapshot
+    ? state.ccPayments.filter(x=>x.date>snapshot.asOfDate)
+    : state.ccPayments;
+
+  const currentBalance=Math.max(
     0,
     openingCurrent
-    + purchasesAfterSnapshot.reduce((s,x)=>s+Number(x.jmdAmount),0)
-    - paymentsAfterSnapshot.reduce((s,x)=>s+Number(x.amount),0)
+    + allPurchasesAfterSnapshot.reduce((s,x)=>s+Number(x.jmdAmount||0),0)
+    - allPaymentsAfterSnapshot.reduce((s,x)=>s+Number(x.amount||0),0)
   );
 
   const limit=Number(state.creditCard.limit||0);
-  $('#ccCardName').textContent=state.creditCard.name||'Scotia Credit Card';
-  $('#ccLimit').textContent=money.format(limit);
-  $('#ccStatementBalance').textContent=money.format(stmt);
-  $('#ccPayments').textContent=money.format(payTotal);
-  $('#ccStatementRemaining').textContent=money.format(Math.max(0,stmt-payTotal));
-  $('#ccCurrentBalance').textContent=money.format(current);
-  let available=Math.max(0,limit-current);
+
+  let availableCredit=Math.max(0,limit-currentBalance);
   if(snapshot&&snapshot.availableCredit!==null&&snapshot.availableCredit!==undefined&&snapshot.availableCredit!==''){
     const netAfterSnapshot=
-      paymentsAfterSnapshot.reduce((s,x)=>s+Number(x.amount),0)
-      - purchasesAfterSnapshot.reduce((s,x)=>s+Number(x.jmdAmount),0);
-    available=Math.max(0,Number(snapshot.availableCredit)+netAfterSnapshot);
+      allPaymentsAfterSnapshot.reduce((s,x)=>s+Number(x.amount||0),0)
+      - allPurchasesAfterSnapshot.reduce((s,x)=>s+Number(x.jmdAmount||0),0);
+    availableCredit=Math.max(0,Number(snapshot.availableCredit)+netAfterSnapshot);
   }
-  $('#ccAvailable').textContent=money.format(available);
+
+  $('#ccCardName').textContent=state.creditCard.name||'Scotia Credit Card';
+  $('#ccLimit').textContent=money.format(limit);
+  $('#ccStatementBalance').textContent=money.format(statementBalance);
+  $('#ccPayments').textContent=money.format(paymentsMade);
+  $('#ccStatementRemaining').textContent=money.format(statementRemaining);
+  $('#ccCurrentBalance').textContent=money.format(currentBalance);
+  $('#ccAvailable').textContent=money.format(availableCredit);
   $('#ccDueDate').textContent=fmt(c.due);
+
   const td=new Date();td.setHours(12,0,0,0);
   $('#ccDaysDue').textContent=Math.max(0,Math.ceil((c.due-td)/86400000))+' days';
 
+  // --- Ownership ---
   const openingKh=Number(snapshot?.khadijahOwed||0);
   const openingMom=Number(snapshot?.momOwed||0);
 
-  let khDirect=0, momDirect=0, khShared=0, momShared=0, sharedTotal=0;
+  let khDirect=0,momDirect=0,khShared=0,momShared=0,sharedTotal=0;
 
-  // IMPORTANT:
-  // Every purchase the user explicitly enters must always affect Who Owes What.
-  // The opening snapshot is only a starting balance for older/unitemized card activity.
-  // Do not filter entered purchases out based on the snapshot date.
+  // Every purchase entered for the selected statement must be allocated.
   purchases.forEach(x=>{
     const amount=Number(x.jmdAmount||0);
 
@@ -613,9 +656,8 @@ function renderCreditCard(){
       momDirect+=amount;
     }else if(x.owner==='shared'){
       const khPct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
-      const momPct=100-khPct;
       khShared+=amount*(khPct/100);
-      momShared+=amount*(momPct/100);
+      momShared+=amount*((100-khPct)/100);
       sharedTotal+=amount;
     }
   });
@@ -623,10 +665,9 @@ function renderCreditCard(){
   const khResponsibility=openingKh+khDirect+khShared;
   const momResponsibility=openingMom+momDirect+momShared;
 
-  // Payments entered for the selected statement are attributed to the person
-  // selected when the payment was recorded.
-  const khp=pays.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount),0);
-  const mop=pays.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount),0);
+  // Payments in the selected statement reduce the corresponding owner's amount.
+  const khPaid=pays.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount||0),0);
+  const momPaid=pays.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount||0),0);
 
   if($('#ccKhadijahDirect')) $('#ccKhadijahDirect').textContent=money.format(khDirect);
   if($('#ccMomDirect')) $('#ccMomDirect').textContent=money.format(momDirect);
@@ -638,22 +679,63 @@ function renderCreditCard(){
 
   $('#ccKhadijahSpend').textContent=money.format(khResponsibility);
   $('#ccMomSpend').textContent=money.format(momResponsibility);
-  $('#ccKhadijahPaid').textContent=money.format(khp);
-  $('#ccMomPaid').textContent=money.format(mop);
-  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,khResponsibility-khp))+' remaining';
-  $('#ccMomOwes').textContent=money.format(Math.max(0,momResponsibility-mop))+' remaining';
+  $('#ccKhadijahPaid').textContent=money.format(khPaid);
+  $('#ccMomPaid').textContent=money.format(momPaid);
+  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,khResponsibility-khPaid))+' remaining';
+  $('#ccMomOwes').textContent=money.format(Math.max(0,momResponsibility-momPaid))+' remaining';
 
-  const snapshotNote=snapshotInThisStatement?`<div class="snapshot-note"><strong>Opening card position</strong><span>Imported as of ${snapshot.asOfDate}: Statement ${money.format(snapshot.statementBalance)}, Current ${money.format(snapshot.currentBalance)}</span></div>`:'';
-  $('#ccTransactionsList').innerHTML=snapshotNote+(purchases.length?purchases.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
-    const owner=x.owner==='shared'?`Shared ${x.khadijahShare||50}/${100-Number(x.khadijahShare||50)}`:x.owner==='mom'?'Mom':'Khadijah';
-    const fx=x.currency!=='JMD'&&x.foreignAmount?` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate).toFixed(2)}`:'';
-    const splitDetail=x.owner==='shared'?`<div class="tx-meta">Khadijah ${money.format(Number(x.jmdAmount)*(Number(x.khadijahShare||50)/100))} • Mom ${money.format(Number(x.jmdAmount)*(1-Number(x.khadijahShare||50)/100))}</div>`:'';
-    return `<div class="tx"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div>${splitDetail}</div><strong class="negative">${money.format(x.jmdAmount)}</strong></div>`
-  }).join(''):'<p class="muted">No credit card purchases entered for this statement.</p>');
+  // --- Purchases list ---
+  $('#ccTransactionsList').innerHTML=purchases.length
+    ? [...purchases].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+        const owner=x.owner==='shared'
+          ? `Shared ${x.khadijahShare||50}/${100-Number(x.khadijahShare||50)}`
+          : x.owner==='mom'?'Mom':'Khadijah';
 
+        const fx=x.currency&&x.currency!=='JMD'&&x.foreignAmount
+          ? ` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate||0).toFixed(2)} JMD/${x.currency}`
+          : '';
+
+        const splitDetail=x.owner==='shared'
+          ? `<div class="tx-meta">Khadijah ${money.format(Number(x.jmdAmount)*(Number(x.khadijahShare||50)/100))} • Mom ${money.format(Number(x.jmdAmount)*(1-Number(x.khadijahShare||50)/100))}</div>`
+          : '';
+
+        return `<div class="tx">
+          <div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div>${splitDetail}</div>
+          <strong class="negative">${money.format(x.jmdAmount)}</strong>
+        </div>`;
+      }).join('')
+    : '<p class="muted">No credit card purchases in this statement.</p>';
+
+  // --- Payments list ---
+  $('#ccPaymentsList').innerHTML=pays.length
+    ? [...pays].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+        const who=x.owner==='mom'?'Mom':'Khadijah';
+        const account=x.accountId?accountName(x.accountId):'No linked account';
+        return `<div class="tx cc-payment-row">
+          <div>
+            <strong>${who} Payment</strong>
+            <div class="tx-meta">${x.date} • ${account}</div>
+          </div>
+          <div class="item-actions">
+            <strong class="positive">-${money.format(x.amount)}</strong>
+            <button type="button" class="mini secondary" data-edit-cc-payment="${x.id}">Edit</button>
+            <button type="button" class="mini danger" data-delete-cc-payment="${x.id}">Delete</button>
+          </div>
+        </div>`;
+      }).join('')
+    : '<p class="muted">No credit card payments recorded in this statement.</p>';
+
+  // --- FX summary ---
   const fx={};
-  purchases.filter(x=>x.currency&&x.currency!=='JMD'&&x.foreignAmount).forEach(x=>{if(!fx[x.currency])fx[x.currency]={f:0,j:0};fx[x.currency].f+=Number(x.foreignAmount);fx[x.currency].j+=Number(x.jmdAmount)});
-  $('#ccFxSummary').innerHTML=Object.keys(fx).length?Object.entries(fx).map(([cur,v])=>`<div class="report-row"><span>${cur}</span><span>${cur} ${v.f.toFixed(2)}</span><strong>${money.format(v.j)} • Avg ${(v.j/v.f).toFixed(2)} JMD/${cur}</strong></div>`).join(''):'<p class="muted">No foreign-currency purchases in this statement.</p>';
+  purchases.filter(x=>x.currency&&x.currency!=='JMD'&&x.foreignAmount).forEach(x=>{
+    if(!fx[x.currency])fx[x.currency]={f:0,j:0};
+    fx[x.currency].f+=Number(x.foreignAmount);
+    fx[x.currency].j+=Number(x.jmdAmount);
+  });
+
+  $('#ccFxSummary').innerHTML=Object.keys(fx).length
+    ? Object.entries(fx).map(([cur,v])=>`<div class="report-row"><span>${cur}</span><span>${cur} ${v.f.toFixed(2)}</span><strong>${money.format(v.j)} • Avg ${(v.j/v.f).toFixed(2)} JMD/${cur}</strong></div>`).join('')
+    : '<p class="muted">No foreign-currency purchases in this statement.</p>';
 }
 
 function renderDebts(){
@@ -686,6 +768,20 @@ function renderDebts(){
       </div>
     </div>`;
   }).join('');
+}
+
+
+function openCcPaymentEditor(id){
+  const p=state.ccPayments.find(x=>x.id===id);
+  if(!p)return;
+
+  open('editCcPaymentModal');
+  const f=$('#editCcPaymentForm');
+  f.elements.id.value=p.id;
+  f.elements.owner.value=p.owner||'khadijah';
+  f.elements.amount.value=p.amount;
+  f.elements.date.value=p.date;
+  f.elements.accountId.value=p.accountId||'';
 }
 
 function openDebtEditor(id){
@@ -862,6 +958,27 @@ document.addEventListener('click',e=>{
    return;
  }
 
+
+ let editCcPayment=e.target.closest('[data-edit-cc-payment]');
+ if(editCcPayment){openCcPaymentEditor(editCcPayment.dataset.editCcPayment);return}
+
+ let deleteCcPayment=e.target.closest('[data-delete-cc-payment]');
+ if(deleteCcPayment){
+   const p=state.ccPayments.find(x=>x.id===deleteCcPayment.dataset.deleteCcPayment);
+   if(p&&confirm(`Delete this ${p.owner==='mom'?'Mom':'Khadijah'} credit card payment?`)){
+     state.ccPayments=state.ccPayments.filter(x=>x.id!==p.id);
+
+     // Remove any linked bank-account transaction created for this payment.
+     if(p.accountTransactionId){
+       state.transactions=state.transactions.filter(t=>t.id!==p.accountTransactionId);
+     }
+
+     save();
+     render();
+   }
+   return;
+ }
+
  let payDebt=e.target.closest('[data-pay-debt]');
  if(payDebt){openDebtPayment(payDebt.dataset.payDebt);return}
 
@@ -949,7 +1066,47 @@ $('#ccSnapshotForm').onsubmit=e=>{
 
 $('#cardSettingsForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.creditCard={name:f.get('name').trim(),limit:Number(f.get('limit')||0)};save();closeDialog(e.target);renderCreditCard()};
 $('#ccPurchaseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),cur=f.get('currency'),foreign=Number(f.get('foreignAmount')||0),jmd=Number(f.get('jmdAmount'));state.ccPurchases.push({id:uid(),description:f.get('description').trim(),category:f.get('category'),owner:f.get('owner'),khadijahShare:Number(f.get('khadijahShare')||50),date:f.get('date'),jmdAmount:jmd,currency:cur,foreignAmount:cur==='JMD'?null:foreign,effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null});save();closeDialog(e.target);render()};
-$('#ccPaymentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),amt=Number(f.get('amount')),acct=f.get('accountId');state.ccPayments.push({id:uid(),owner:f.get('owner'),amount:amt,date:f.get('date'),accountId:acct||null});if(f.get('deductAccount')==='on'&&acct){state.transactions.push({id:uid(),type:'expense',description:'Credit Card Payment',category:'Transfer / Credit Card',amount:amt,accountId:acct,date:f.get('date'),ccPayment:true})}save();closeDialog(e.target);render()};
+$('#ccPaymentForm').onsubmit=e=>{
+  e.preventDefault();
+  let f=new FormData(e.target);
+  const amount=Number(f.get('amount'));
+  const accountId=f.get('accountId')||null;
+
+  if(!Number.isFinite(amount)||amount<=0){
+    alert('Enter a valid payment amount.');
+    return;
+  }
+
+  let accountTransactionId=null;
+
+  // A card payment is a transfer/liability payment, not spending.
+  if(f.get('deductAccount')==='on'&&accountId){
+    accountTransactionId=uid();
+    state.transactions.push({
+      id:accountTransactionId,
+      type:'adjustment',
+      description:'Credit Card Payment',
+      amount:amount,
+      adjustmentDirection:'decrease',
+      accountId:accountId,
+      date:f.get('date'),
+      ccPayment:true
+    });
+  }
+
+  state.ccPayments.push({
+    id:uid(),
+    owner:f.get('owner'),
+    amount:amount,
+    date:f.get('date'),
+    accountId:accountId,
+    accountTransactionId:accountTransactionId
+  });
+
+  save();
+  closeDialog(e.target);
+  render();
+};
 $('#editSavingForm').onsubmit=e=>{
  e.preventDefault();
  let f=new FormData(e.target),s=state.funds.find(x=>x.id===f.get('id'));if(!s)return;
@@ -966,6 +1123,39 @@ $('#editSavingForm').onsubmit=e=>{
  s.amount=newAmount;
  s.date=f.get('date');
  save();closeDialog(e.target);render();
+};
+
+
+$('#editCcPaymentForm').onsubmit=e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const p=state.ccPayments.find(x=>x.id===f.get('id'));
+  if(!p)return;
+
+  const amount=Number(f.get('amount'));
+  if(!Number.isFinite(amount)||amount<=0){
+    alert('Enter a valid payment amount.');
+    return;
+  }
+
+  p.owner=f.get('owner');
+  p.amount=amount;
+  p.date=f.get('date');
+  p.accountId=f.get('accountId')||null;
+
+  // Keep linked bank deduction synchronized.
+  if(p.accountTransactionId){
+    const t=state.transactions.find(x=>x.id===p.accountTransactionId);
+    if(t){
+      t.amount=amount;
+      t.date=p.date;
+      t.accountId=p.accountId;
+    }
+  }
+
+  save();
+  closeDialog(e.target);
+  render();
 };
 
 $('#debtForm').onsubmit=e=>{

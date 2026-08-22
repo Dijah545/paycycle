@@ -512,3 +512,10 @@ html[data-theme="dark"] .shared-summary{
     background:linear-gradient(180deg,#0e4f84,#082e50);
   }
 }
+
+.cc-payment-row{align-items:center}
+.cc-payment-row .positive{color:#0078d4!important}
+@media(max-width:600px){
+  .cc-payment-row{grid-template-columns:1fr}
+  .cc-payment-row .item-actions{justify-content:flex-end}
+}
