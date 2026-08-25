@@ -602,3 +602,10 @@ html[data-theme="dark"] .report-grid .metric strong{
   border-radius:50%;
   flex:0 0 40px;
 }
+
+.cc-purchase-row{align-items:center}
+.cc-purchase-right{display:grid;justify-items:end;gap:8px}
+.purchase-paid-check{display:inline-flex;align-items:center;gap:6px;margin:0;padding:6px 9px;border-radius:999px;background:#e8f3fc;color:#005a9e;font-size:.76rem;font-weight:800;cursor:pointer}
+.purchase-paid-check input{width:16px;height:16px;margin:0;accent-color:#0078d4}
+.shared-paid-controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+html[data-theme="dark"] .purchase-paid-check{background:#1c3554;color:#acd8ff}
