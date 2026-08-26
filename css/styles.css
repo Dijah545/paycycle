@@ -609,3 +609,5 @@ html[data-theme="dark"] .report-grid .metric strong{
 .purchase-paid-check input{width:16px;height:16px;margin:0;accent-color:#0078d4}
 .shared-paid-controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 html[data-theme="dark"] .purchase-paid-check{background:#1c3554;color:#acd8ff}
+
+.owner-lines [id$='MarkedPaid']{color:#0078d4!important}.owner-lines [id$='Unmatched']{color:#ff8c00!important}

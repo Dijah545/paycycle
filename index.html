@@ -165,7 +165,7 @@
           <div><span>Direct purchases</span><b id="ccKhadijahDirect">$0</b></div>
           <div><span>Share of shared purchases</span><b id="ccKhadijahShared">$0</b></div>
           <div class="owner-total"><span>Total responsibility</span><b id="ccKhadijahSpend">$0</b></div>
-          <div><span>Payments recorded</span><b id="ccKhadijahPaid">$0</b></div>
+          <div><span>Payments recorded</span><b id="ccKhadijahPaid">$0</b></div><div><span>Purchases checked off</span><b id="ccKhadijahMarkedPaid">$0</b></div><div><span>Payment not yet matched</span><b id="ccKhadijahUnmatched">$0</b></div>
         </div>
       </div>
       <div class="owner-card owner-detail">
@@ -175,7 +175,7 @@
           <div><span>Direct purchases</span><b id="ccMomDirect">$0</b></div>
           <div><span>Share of shared purchases</span><b id="ccMomShared">$0</b></div>
           <div class="owner-total"><span>Total responsibility</span><b id="ccMomSpend">$0</b></div>
-          <div><span>Payments recorded</span><b id="ccMomPaid">$0</b></div>
+          <div><span>Payments recorded</span><b id="ccMomPaid">$0</b></div><div><span>Purchases checked off</span><b id="ccMomMarkedPaid">$0</b></div><div><span>Payment not yet matched</span><b id="ccMomUnmatched">$0</b></div>
         </div>
       </div>
     </div>
@@ -188,7 +188,7 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><h2>Statement Transactions</h2></div><p class="muted small">Tick Paid to settle that purchase against the person’s Who Owes What balance. Shared purchases can be settled separately for Khadijah and Mom.</p>
+    <div class="section-title"><h2>Statement Transactions</h2></div><p class="muted small">Tick Covered to show which purchases a recorded payment has covered. Only actual payments reduce Who Owes What.</p>
     <div id="ccTransactionsList" class="list"></div>
   </section>
   <section class="card">
@@ -651,27 +651,30 @@ function renderCreditCard(){
   const openingMom=Number(snapshot?.momOwed||0);
 
   let khDirect=0,momDirect=0,khShared=0,momShared=0,sharedTotal=0;
-  let khSettled=0,momSettled=0;
+  let khMarkedPaid=0,momMarkedPaid=0;
 
   purchases.forEach(x=>{
     const amount=Number(x.jmdAmount||0);
     if(x.owner==='khadijah'){
       khDirect+=amount;
-      if(isPurchasePaid(x.id,'khadijah'))khSettled+=amount;
+      if(isPurchasePaid(x.id,'khadijah'))khMarkedPaid+=amount;
     }else if(x.owner==='mom'){
       momDirect+=amount;
-      if(isPurchasePaid(x.id,'mom'))momSettled+=amount;
+      if(isPurchasePaid(x.id,'mom'))momMarkedPaid+=amount;
     }else if(x.owner==='shared'){
       const khPct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
-      const khAmt=amount*(khPct/100), momAmt=amount*(1-khPct/100);
-      khShared+=khAmt; momShared+=momAmt; sharedTotal+=amount;
-      if(isPurchasePaid(x.id,'khadijah'))khSettled+=khAmt;
-      if(isPurchasePaid(x.id,'mom'))momSettled+=momAmt;
+      const khAmt=amount*(khPct/100),momAmt=amount*(1-khPct/100);
+      khShared+=khAmt;momShared+=momAmt;sharedTotal+=amount;
+      if(isPurchasePaid(x.id,'khadijah'))khMarkedPaid+=khAmt;
+      if(isPurchasePaid(x.id,'mom'))momMarkedPaid+=momAmt;
     }
   });
 
   const khResponsibility=openingKh+khDirect+khShared;
   const momResponsibility=openingMom+momDirect+momShared;
+
+  // Only actual recorded payments reduce what each person owes.
+  // Checkboxes are reconciliation markers only.
   const khPaid=pays.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount||0),0);
   const momPaid=pays.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount||0),0);
 
@@ -685,10 +688,15 @@ function renderCreditCard(){
 
   $('#ccKhadijahSpend').textContent=money.format(khResponsibility);
   $('#ccMomSpend').textContent=money.format(momResponsibility);
-  $('#ccKhadijahPaid').textContent=money.format(khPaid+khSettled);
-  $('#ccMomPaid').textContent=money.format(momPaid+momSettled);
-  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,khResponsibility-khPaid-khSettled))+' remaining';
-  $('#ccMomOwes').textContent=money.format(Math.max(0,momResponsibility-momPaid-momSettled))+' remaining';
+  $('#ccKhadijahPaid').textContent=money.format(khPaid);
+  $('#ccMomPaid').textContent=money.format(momPaid);
+  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,khResponsibility-khPaid))+' remaining';
+  $('#ccMomOwes').textContent=money.format(Math.max(0,momResponsibility-momPaid))+' remaining';
+
+  if($('#ccKhadijahMarkedPaid'))$('#ccKhadijahMarkedPaid').textContent=money.format(khMarkedPaid);
+  if($('#ccMomMarkedPaid'))$('#ccMomMarkedPaid').textContent=money.format(momMarkedPaid);
+  if($('#ccKhadijahUnmatched'))$('#ccKhadijahUnmatched').textContent=money.format(Math.max(0,khPaid-khMarkedPaid));
+  if($('#ccMomUnmatched'))$('#ccMomUnmatched').textContent=money.format(Math.max(0,momPaid-momMarkedPaid));
 
   // --- Purchases list ---
   $('#ccTransactionsList').innerHTML=purchases.length
@@ -698,11 +706,11 @@ function renderCreditCard(){
         let controls='';
         if(x.owner==='shared'){
           controls=`<div class="shared-paid-controls">
-            <label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="khadijah" ${isPurchasePaid(x.id,'khadijah')?'checked':''}><span>K Paid</span></label>
-            <label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="mom" ${isPurchasePaid(x.id,'mom')?'checked':''}><span>M Paid</span></label>
+            <label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="khadijah" ${isPurchasePaid(x.id,'khadijah')?'checked':''}><span>K Covered</span></label>
+            <label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="mom" ${isPurchasePaid(x.id,'mom')?'checked':''}><span>M Covered</span></label>
           </div>`;
         }else{
-          controls=`<label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="${x.owner}" ${isPurchasePaid(x.id,x.owner)?'checked':''}><span>Paid</span></label>`;
+          controls=`<label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="${x.owner}" ${isPurchasePaid(x.id,x.owner)?'checked':''}><span>Covered</span></label>`;
         }
         const split=x.owner==='shared'?`<div class="tx-meta">Khadijah ${money.format(Number(x.jmdAmount)*(Number(x.khadijahShare||50)/100))} • Mom ${money.format(Number(x.jmdAmount)*(1-Number(x.khadijahShare||50)/100))}</div>`:'';
         return `<div class="tx cc-purchase-row"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div>${split}</div><div class="cc-purchase-right"><strong class="negative">${money.format(x.jmdAmount)}</strong>${controls}</div></div>`;
