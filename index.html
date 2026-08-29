@@ -155,31 +155,33 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><div><p class="eyebrow">CUMULATIVE OWNERSHIP LEDGER</p><h2>Who Owes What</h2></div><button type="button" data-open="ccOwnerOpeningModal" class="secondary">Brought Forward</button></div>
-    <p class="muted small">This ledger is cumulative across all statements. Purchases add to each person’s balance and payments reduce it. Changing the statement period does not reset Who Owes What.</p>
-    <div class="owner-grid">
+    <div class="section-title"><div><p class="eyebrow">PURCHASE OWNERSHIP</p><h2>Who Owes What</h2></div><button type="button" data-open="ccOwnerOpeningModal" class="secondary">Brought Forward</button></div>
+    <p class="muted small" id="ccOwnershipCycle">Selected billing cycle</p>
+    <div class="owner-grid simplified-owner-grid">
       <div class="owner-card owner-detail">
-        <div class="owner-heading"><span class="owner-avatar">K</span><div><span>Khadijah</span><strong id="ccKhadijahOwes">$0 remaining</strong></div></div>
+        <div class="owner-heading"><span class="owner-avatar">K</span><div><span>Khadijah</span><strong id="ccKhadijahOwes">$0 cumulative</strong></div></div>
         <div class="owner-lines">
-          <div><span>Opening/current share</span><b id="ccKhadijahOpening">$0</b></div>
-          <div><span>Direct purchases</span><b id="ccKhadijahDirect">$0</b></div>
-          <div><span>Share of shared purchases</span><b id="ccKhadijahShared">$0</b></div>
-          <div class="owner-total"><span>Total responsibility</span><b id="ccKhadijahSpend">$0</b></div>
-          <div><span>Payments recorded</span><b id="ccKhadijahPaid">$0</b></div><div><span>Purchases checked off</span><b id="ccKhadijahMarkedPaid">$0</b></div><div><span>Payment not yet matched</span><b id="ccKhadijahUnmatched">$0</b></div>
+          <div><span>Own purchases this cycle</span><b id="ccKhadijahDirect">$0</b></div>
+          <div><span>Shared portion this cycle</span><b id="ccKhadijahShared">$0</b></div>
+          <div class="owner-total"><span>Cycle total</span><b id="ccKhadijahSpend">$0</b></div>
+          <div class="cumulative-total"><span>Cumulative balance</span><b id="ccKhadijahCumulative">$0</b></div>
         </div>
       </div>
       <div class="owner-card owner-detail">
-        <div class="owner-heading"><span class="owner-avatar">M</span><div><span>Mom</span><strong id="ccMomOwes">$0 remaining</strong></div></div>
+        <div class="owner-heading"><span class="owner-avatar">M</span><div><span>Mom</span><strong id="ccMomOwes">$0 cumulative</strong></div></div>
         <div class="owner-lines">
-          <div><span>Opening/current share</span><b id="ccMomOpening">$0</b></div>
-          <div><span>Direct purchases</span><b id="ccMomDirect">$0</b></div>
-          <div><span>Share of shared purchases</span><b id="ccMomShared">$0</b></div>
-          <div class="owner-total"><span>Total responsibility</span><b id="ccMomSpend">$0</b></div>
-          <div><span>Payments recorded</span><b id="ccMomPaid">$0</b></div><div><span>Purchases checked off</span><b id="ccMomMarkedPaid">$0</b></div><div><span>Payment not yet matched</span><b id="ccMomUnmatched">$0</b></div>
+          <div><span>Own purchases this cycle</span><b id="ccMomDirect">$0</b></div>
+          <div><span>Shared portion this cycle</span><b id="ccMomShared">$0</b></div>
+          <div class="owner-total"><span>Cycle total</span><b id="ccMomSpend">$0</b></div>
+          <div class="cumulative-total"><span>Cumulative balance</span><b id="ccMomCumulative">$0</b></div>
         </div>
       </div>
     </div>
-    <div class="shared-summary"><span>Shared purchases included</span><strong id="ccSharedTotal">$0</strong></div>
+    <div class="shared-summary">
+      <div><span>Shared purchases this cycle</span><strong id="ccSharedTotal">$0</strong></div>
+      <div><span>Khadijah portion</span><strong id="ccSharedKh">$0</strong></div>
+      <div><span>Mom portion</span><strong id="ccSharedMom">$0</strong></div>
+    </div>
   </section>
 
   <section class="quick-actions action-cards cc-actions">
@@ -188,7 +190,24 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><h2>Statement Transactions</h2></div><p class="muted small">Tick Covered to show which purchases a recorded payment has covered. Only actual payments reduce Who Owes What.</p>
+    <div class="section-title"><div><h2>Statement Purchases</h2><p class="muted small" id="ccPurchaseCycleLabel">Selected billing cycle</p></div></div>
+    <div class="cc-filter-grid">
+      <label>Coverage
+        <select id="ccCoverageFilter">
+          <option value="all">All</option>
+          <option value="needs">Needs Coverage</option>
+          <option value="covered">Covered</option>
+        </select>
+      </label>
+      <label>Person
+        <select id="ccPersonFilter">
+          <option value="all">Everyone</option>
+          <option value="khadijah">Khadijah</option>
+          <option value="mom">Mom</option>
+          <option value="shared">Shared</option>
+        </select>
+      </label>
+    </div>
     <div id="ccTransactionsList" class="list"></div>
   </section>
   <section class="card">
@@ -668,60 +687,99 @@ function renderCreditCard(){
   const td=new Date();td.setHours(12,0,0,0);
   $('#ccDaysDue').textContent=Math.max(0,Math.ceil((selected.due-td)/86400000))+' days';
 
-  // WHO OWES WHAT IS CUMULATIVE — NEVER FILTERED BY STATEMENT.
-  const openingKh=Number(state.ccOwnerOpening?.khadijah||0);
-  const openingMom=Number(state.ccOwnerOpening?.mom||0);
-  let khDirect=0,momDirect=0,khShared=0,momShared=0,sharedTotal=0,khCovered=0,momCovered=0;
+  // WHO OWES WHAT: selected-cycle breakdown + simple cumulative balance.
+  if($('#ccOwnershipCycle'))$('#ccOwnershipCycle').textContent=`${fmt(selected.statementDate)} statement • Billing cycle ${fmt(selected.start)} – ${fmt(selected.end)}`;
+  if($('#ccPurchaseCycleLabel'))$('#ccPurchaseCycleLabel').textContent=`Billing cycle ${fmt(selected.start)} – ${fmt(selected.end)}`;
 
-  state.ccPurchases.forEach(x=>{
+  let cycleKhDirect=0,cycleMomDirect=0,cycleKhShared=0,cycleMomShared=0,cycleShared=0;
+  purchases.forEach(x=>{
     const amount=Number(x.jmdAmount||0);
-    if(x.owner==='khadijah'){
-      khDirect+=amount;if(isPurchasePaid(x.id,'khadijah'))khCovered+=amount;
-    }else if(x.owner==='mom'){
-      momDirect+=amount;if(isPurchasePaid(x.id,'mom'))momCovered+=amount;
-    }else{
+    if(x.owner==='khadijah')cycleKhDirect+=amount;
+    else if(x.owner==='mom')cycleMomDirect+=amount;
+    else{
       const pct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
       const ka=amount*pct/100,ma=amount-ka;
-      khShared+=ka;momShared+=ma;sharedTotal+=amount;
-      if(isPurchasePaid(x.id,'khadijah'))khCovered+=ka;
-      if(isPurchasePaid(x.id,'mom'))momCovered+=ma;
+      cycleKhShared+=ka;cycleMomShared+=ma;cycleShared+=amount;
     }
   });
 
-  const allKhPayments=state.ccPayments.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount||0),0);
-  const allMomPayments=state.ccPayments.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount||0),0);
-  const khTotal=openingKh+khDirect+khShared,momTotal=openingMom+momDirect+momShared;
-
-  if($('#ccKhadijahOpening'))$('#ccKhadijahOpening').textContent=money.format(openingKh);
-  if($('#ccMomOpening'))$('#ccMomOpening').textContent=money.format(openingMom);
-  if($('#ccKhadijahDirect'))$('#ccKhadijahDirect').textContent=money.format(khDirect);
-  if($('#ccMomDirect'))$('#ccMomDirect').textContent=money.format(momDirect);
-  if($('#ccKhadijahShared'))$('#ccKhadijahShared').textContent=money.format(khShared);
-  if($('#ccMomShared'))$('#ccMomShared').textContent=money.format(momShared);
-  if($('#ccSharedTotal'))$('#ccSharedTotal').textContent=money.format(sharedTotal);
-  $('#ccKhadijahSpend').textContent=money.format(khTotal);
-  $('#ccMomSpend').textContent=money.format(momTotal);
-  $('#ccKhadijahPaid').textContent=money.format(allKhPayments);
-  $('#ccMomPaid').textContent=money.format(allMomPayments);
-  $('#ccKhadijahOwes').textContent=money.format(Math.max(0,khTotal-allKhPayments))+' remaining';
-  $('#ccMomOwes').textContent=money.format(Math.max(0,momTotal-allMomPayments))+' remaining';
-  if($('#ccKhadijahMarkedPaid'))$('#ccKhadijahMarkedPaid').textContent=money.format(khCovered);
-  if($('#ccMomMarkedPaid'))$('#ccMomMarkedPaid').textContent=money.format(momCovered);
-  if($('#ccKhadijahUnmatched'))$('#ccKhadijahUnmatched').textContent=money.format(Math.max(0,allKhPayments-khCovered));
-  if($('#ccMomUnmatched'))$('#ccMomUnmatched').textContent=money.format(Math.max(0,allMomPayments-momCovered));
-
-  // Selected statement purchase detail.
-  $('#ccTransactionsList').innerHTML=purchases.length?[...purchases].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
-    const owner=x.owner==='shared'?`Shared ${x.khadijahShare||50}/${100-Number(x.khadijahShare||50)}`:(x.owner==='mom'?'Mom':'Khadijah');
-    const fx=x.currency&&x.currency!=='JMD'&&x.foreignAmount?` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate||0).toFixed(2)} JMD/${x.currency}`:'';
-    let controls='';
-    if(x.owner==='shared'){
-      controls=`<div class="shared-paid-controls"><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="khadijah" ${isPurchasePaid(x.id,'khadijah')?'checked':''}><span>K Covered</span></label><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="mom" ${isPurchasePaid(x.id,'mom')?'checked':''}><span>M Covered</span></label></div>`;
-    }else{
-      controls=`<label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="${x.owner}" ${isPurchasePaid(x.id,x.owner)?'checked':''}><span>Covered</span></label>`;
+  let allKhPurchases=0,allMomPurchases=0;
+  state.ccPurchases.forEach(x=>{
+    const amount=Number(x.jmdAmount||0);
+    if(x.owner==='khadijah')allKhPurchases+=amount;
+    else if(x.owner==='mom')allMomPurchases+=amount;
+    else{
+      const pct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
+      allKhPurchases+=amount*pct/100;
+      allMomPurchases+=amount*(1-pct/100);
     }
-    return `<div class="tx cc-purchase-row"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div></div><div class="cc-purchase-right"><strong class="negative">${money.format(x.jmdAmount)}</strong>${controls}</div></div>`;
-  }).join(''):'<p class="muted">No purchases assigned to this statement.</p>';
+  });
+  const khPayments=state.ccPayments.filter(x=>x.owner==='khadijah').reduce((s,x)=>s+Number(x.amount||0),0);
+  const momPayments=state.ccPayments.filter(x=>x.owner==='mom').reduce((s,x)=>s+Number(x.amount||0),0);
+  const khCumulative=Math.max(0,Number(state.ccOwnerOpening?.khadijah||0)+allKhPurchases-khPayments);
+  const momCumulative=Math.max(0,Number(state.ccOwnerOpening?.mom||0)+allMomPurchases-momPayments);
+
+  $('#ccKhadijahDirect').textContent=money.format(cycleKhDirect);
+  $('#ccMomDirect').textContent=money.format(cycleMomDirect);
+  $('#ccKhadijahShared').textContent=money.format(cycleKhShared);
+  $('#ccMomShared').textContent=money.format(cycleMomShared);
+  $('#ccKhadijahSpend').textContent=money.format(cycleKhDirect+cycleKhShared);
+  $('#ccMomSpend').textContent=money.format(cycleMomDirect+cycleMomShared);
+  $('#ccSharedTotal').textContent=money.format(cycleShared);
+  if($('#ccSharedKh'))$('#ccSharedKh').textContent=money.format(cycleKhShared);
+  if($('#ccSharedMom'))$('#ccSharedMom').textContent=money.format(cycleMomShared);
+  if($('#ccKhadijahCumulative'))$('#ccKhadijahCumulative').textContent=money.format(khCumulative);
+  if($('#ccMomCumulative'))$('#ccMomCumulative').textContent=money.format(momCumulative);
+  $('#ccKhadijahOwes').textContent=money.format(khCumulative)+' cumulative';
+  $('#ccMomOwes').textContent=money.format(momCumulative)+' cumulative';
+
+  // Selected statement purchase detail with Coverage + Person filters.
+  const coverageFilter=$('#ccCoverageFilter')?.value||'all';
+  const personFilter=$('#ccPersonFilter')?.value||'all';
+
+  const filteredPurchases=purchases.filter(x=>{
+    const khCovered=isPurchasePaid(x.id,'khadijah');
+    const momCovered=isPurchasePaid(x.id,'mom');
+
+    let personMatch=true;
+    if(personFilter==='khadijah')personMatch=x.owner==='khadijah'||x.owner==='shared';
+    else if(personFilter==='mom')personMatch=x.owner==='mom'||x.owner==='shared';
+    else if(personFilter==='shared')personMatch=x.owner==='shared';
+    if(!personMatch)return false;
+
+    if(coverageFilter==='all')return true;
+
+    if(x.owner==='shared'){
+      if(personFilter==='khadijah')return coverageFilter==='covered'?khCovered:!khCovered;
+      if(personFilter==='mom')return coverageFilter==='covered'?momCovered:!momCovered;
+      if(coverageFilter==='covered')return khCovered||momCovered;
+      return !khCovered||!momCovered;
+    }
+
+    const covered=x.owner==='mom'?momCovered:khCovered;
+    return coverageFilter==='covered'?covered:!covered;
+  });
+
+  $('#ccTransactionsList').innerHTML=filteredPurchases.length?[...filteredPurchases].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+    const amount=Number(x.jmdAmount||0);
+    const fx=x.currency&&x.currency!=='JMD'&&x.foreignAmount?` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate||0).toFixed(2)} JMD/${x.currency}`:'';
+
+    if(x.owner==='shared'){
+      const pct=Math.max(0,Math.min(100,Number(x.khadijahShare||50))),ka=amount*pct/100,ma=amount-ka;
+      return `<div class="tx cc-purchase-row">
+        <div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • Shared ${pct}/${100-pct}${fx}</div>
+          <div class="shared-status-lines">
+            <div><span>Khadijah • ${money.format(ka)}</span><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="khadijah" ${isPurchasePaid(x.id,'khadijah')?'checked':''}><span>${isPurchasePaid(x.id,'khadijah')?'Covered':'Needs Coverage'}</span></label></div>
+            <div><span>Mom • ${money.format(ma)}</span><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="mom" ${isPurchasePaid(x.id,'mom')?'checked':''}><span>${isPurchasePaid(x.id,'mom')?'Covered':'Needs Coverage'}</span></label></div>
+          </div>
+        </div><div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
+      </div>`;
+    }
+
+    const owner=x.owner==='mom'?'Mom':'Khadijah',covered=isPurchasePaid(x.id,x.owner);
+    return `<div class="tx cc-purchase-row"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div></div>
+      <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="${x.owner}" ${covered?'checked':''}><span>${covered?'Covered':'Needs Coverage'}</span></label></div></div>`;
+  }).join(''):'<p class="muted">No purchases match these filters for this billing cycle.</p>';
 
   // Payments explicitly applied to selected statement, regardless of payment date.
   $('#ccPaymentsList').innerHTML=pays.length?[...pays].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
@@ -1031,6 +1089,8 @@ document.addEventListener('change',e=>{
 $('#typeFilter').onchange=render;
 $('#darkModeToggle').onchange=e=>{const theme=e.target.checked?'dark':'light';localStorage.setItem(THEME_KEY,theme);applyTheme(theme)};$('#searchTx').oninput=render;
 $('#statementSelect').onchange=e=>{statementOffset=Number(e.target.value);renderCreditCard()};
+$('#ccCoverageFilter').onchange=renderCreditCard;
+$('#ccPersonFilter').onchange=renderCreditCard;
 $('#prevStatement').onclick=()=>{statementOffset=Math.max(-12,statementOffset-1);renderCreditCard()};
 $('#nextStatement').onclick=()=>{statementOffset=Math.min(12,statementOffset+1);renderCreditCard()};
 function updateFxPreview(){let f=$('#ccPurchaseForm'),cur=f.elements.currency.value,j=Number(f.elements.jmdAmount.value),x=Number(f.elements.foreignAmount.value);$('#effectiveRatePreview').textContent=(cur!=='JMD'&&j>0&&x>0)?(j/x).toFixed(4)+' JMD/'+cur:'—'}
