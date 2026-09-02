@@ -627,3 +627,76 @@ html[data-theme="dark"] .statement-form-banner{background:#17314f;color:#acd8ff}
 html[data-theme="dark"] .shared-summary>div{background:#152238}
 html[data-theme="dark"] .shared-summary span{color:#9eb0c5}
 @media(max-width:600px){.shared-summary{grid-template-columns:1fr}.cc-filter-grid{grid-template-columns:1fr 1fr}}
+
+
+/* ===== Partial credit-card purchase coverage ===== */
+.coverage-control{
+  display:grid;
+  gap:7px;
+  margin-top:8px;
+}
+.coverage-main{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+.partial-toggle{
+  padding:6px 9px!important;
+  min-height:auto!important;
+}
+.partial-coverage-wrap{
+  display:none;
+  padding:9px 10px;
+  border-radius:12px;
+  border:1px solid #d7e2ee;
+  background:#f8fbfe;
+  max-width:320px;
+}
+.partial-coverage-wrap.show{
+  display:grid;
+  gap:4px;
+}
+.partial-coverage-wrap label{
+  margin:0;
+  font-size:.75rem;
+}
+.partial-coverage-wrap input{
+  margin-top:4px;
+}
+.partial-coverage-wrap small{
+  color:#64748b;
+  line-height:1.35;
+}
+.coverage-help{
+  margin-top:-2px;
+  margin-bottom:12px;
+}
+.shared-person-coverage{
+  display:grid!important;
+  gap:5px!important;
+  align-items:stretch!important;
+  padding:8px 0;
+}
+.shared-person-title{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+.shared-person-title strong{
+  font-size:.82rem;
+}
+.cc-purchase-copy{
+  min-width:0;
+}
+html[data-theme="dark"] .partial-coverage-wrap{
+  background:#111d30;
+  border-color:#2b3d55;
+}
+html[data-theme="dark"] .partial-coverage-wrap small{
+  color:#9eb0c5;
+}
+@media(max-width:600px){
+  .partial-coverage-wrap{max-width:none}
+}

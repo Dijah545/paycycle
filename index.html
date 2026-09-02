@@ -208,6 +208,7 @@
         </select>
       </label>
     </div>
+    <p class="muted small coverage-help">Use <strong>Cover Full</strong> when the entire assigned amount is covered. Choose <strong>Partial</strong> only when a smaller amount was covered.</p>
     <div id="ccTransactionsList" class="list"></div>
   </section>
   <section class="card">
@@ -481,6 +482,7 @@ if(!state.creditCard) state.creditCard={name:'Scotia Credit Card',limit:0};
 if(!Array.isArray(state.ccPurchases)) state.ccPurchases=[];
 if(!Array.isArray(state.ccPayments)) state.ccPayments=[];
 if(!state.ccPurchasePaid||typeof state.ccPurchasePaid!=='object') state.ccPurchasePaid={};
+if(!state.ccPurchaseCoverage||typeof state.ccPurchaseCoverage!=='object') state.ccPurchaseCoverage={};
 if(state.ccSnapshot===undefined) state.ccSnapshot=null;
 if(!state.ccStatements||typeof state.ccStatements!=='object')state.ccStatements={};
 if(!state.ccOwnerOpening||typeof state.ccOwnerOpening!=='object')state.ccOwnerOpening={khadijah:0,mom:0};
@@ -599,8 +601,73 @@ function statementOptionsHtml(selectedKey){
   return out;
 }
 function purchasePaidKey(purchaseId,owner){return `${purchaseId}|${owner}`}
-function isPurchasePaid(purchaseId,owner){return state.ccPurchasePaid[purchasePaidKey(purchaseId,owner)]===true}
-function setPurchasePaid(purchaseId,owner,paid){state.ccPurchasePaid[purchasePaidKey(purchaseId,owner)]=!!paid}
+function purchaseOwnerAmount(purchase,owner){
+  const amount=Number(purchase?.jmdAmount||0);
+  if(!purchase)return 0;
+  if(purchase.owner==='shared'){
+    const pct=Math.max(0,Math.min(100,Number(purchase.khadijahShare||50)));
+    return owner==='khadijah'?amount*(pct/100):amount*(1-pct/100);
+  }
+  return purchase.owner===owner?amount:0;
+}
+function getPurchaseCoveredAmount(purchase,owner){
+  const key=purchasePaidKey(purchase.id,owner);
+  const assigned=purchaseOwnerAmount(purchase,owner);
+  const saved=state.ccPurchaseCoverage[key];
+
+  // Explicit partial/full numeric coverage takes priority.
+  if(saved!==undefined&&saved!==null&&saved!==''){
+    const n=Math.max(0,Number(saved)||0);
+    return Math.min(assigned,n);
+  }
+
+  // Backward compatibility: old checked flag means fully covered.
+  if(state.ccPurchasePaid[key]===true)return assigned;
+  return 0;
+}
+function isPurchasePaid(purchaseId,owner){
+  const purchase=state.ccPurchases.find(x=>x.id===purchaseId);
+  if(!purchase)return false;
+  const assigned=purchaseOwnerAmount(purchase,owner);
+  return assigned>0&&getPurchaseCoveredAmount(purchase,owner)>=assigned-0.005;
+}
+function hasPurchaseCoverage(purchaseId,owner){
+  const purchase=state.ccPurchases.find(x=>x.id===purchaseId);
+  return purchase?getPurchaseCoveredAmount(purchase,owner)>0:false;
+}
+function setPurchasePaid(purchaseId,owner,paid){
+  const purchase=state.ccPurchases.find(x=>x.id===purchaseId);
+  if(!purchase)return;
+  const key=purchasePaidKey(purchaseId,owner);
+
+  if(paid){
+    // Checking the box means "cover all"; no amount entry required.
+    state.ccPurchasePaid[key]=true;
+    delete state.ccPurchaseCoverage[key];
+  }else{
+    state.ccPurchasePaid[key]=false;
+    delete state.ccPurchaseCoverage[key];
+  }
+}
+function setPurchaseCoverageAmount(purchaseId,owner,value){
+  const purchase=state.ccPurchases.find(x=>x.id===purchaseId);
+  if(!purchase)return;
+  const key=purchasePaidKey(purchaseId,owner);
+  const assigned=purchaseOwnerAmount(purchase,owner);
+  const raw=String(value??'').trim();
+
+  if(raw===''){
+    // Blank leaves checkbox/full-cover workflow in control.
+    delete state.ccPurchaseCoverage[key];
+    return;
+  }
+
+  const amount=Math.max(0,Math.min(assigned,Number(raw)||0));
+  state.ccPurchaseCoverage[key]=amount;
+
+  // Explicit amount overrides the old boolean flag.
+  state.ccPurchasePaid[key]=amount>=assigned-0.005;
+}
 
 function migrateCreditCardModel(){
   const current=statementCycle(0);
@@ -738,8 +805,10 @@ function renderCreditCard(){
   const personFilter=$('#ccPersonFilter')?.value||'all';
 
   const filteredPurchases=purchases.filter(x=>{
-    const khCovered=isPurchasePaid(x.id,'khadijah');
-    const momCovered=isPurchasePaid(x.id,'mom');
+    const khFull=isPurchasePaid(x.id,'khadijah');
+    const momFull=isPurchasePaid(x.id,'mom');
+    const khAny=hasPurchaseCoverage(x.id,'khadijah');
+    const momAny=hasPurchaseCoverage(x.id,'mom');
 
     let personMatch=true;
     if(personFilter==='khadijah')personMatch=x.owner==='khadijah'||x.owner==='shared';
@@ -750,35 +819,83 @@ function renderCreditCard(){
     if(coverageFilter==='all')return true;
 
     if(x.owner==='shared'){
-      if(personFilter==='khadijah')return coverageFilter==='covered'?khCovered:!khCovered;
-      if(personFilter==='mom')return coverageFilter==='covered'?momCovered:!momCovered;
-      if(coverageFilter==='covered')return khCovered||momCovered;
-      return !khCovered||!momCovered;
+      if(personFilter==='khadijah')return coverageFilter==='covered'?khAny:!khFull;
+      if(personFilter==='mom')return coverageFilter==='covered'?momAny:!momFull;
+      if(coverageFilter==='covered')return khAny||momAny;
+      return !khFull||!momFull;
     }
 
-    const covered=x.owner==='mom'?momCovered:khCovered;
-    return coverageFilter==='covered'?covered:!covered;
+    const owner=x.owner==='mom'?'mom':'khadijah';
+    const any=owner==='mom'?momAny:khAny;
+    const full=owner==='mom'?momFull:khFull;
+    return coverageFilter==='covered'?any:!full;
   });
 
   $('#ccTransactionsList').innerHTML=filteredPurchases.length?[...filteredPurchases].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
     const amount=Number(x.jmdAmount||0);
     const fx=x.currency&&x.currency!=='JMD'&&x.foreignAmount?` • ${x.currency} ${Number(x.foreignAmount).toFixed(2)} @ ${Number(x.effectiveRate||0).toFixed(2)} JMD/${x.currency}`:'';
 
+    const coverageControl=(owner,assigned)=>{
+      const covered=getPurchaseCoveredAmount(x,owner);
+      const full=assigned>0&&covered>=assigned-0.005;
+      const partial=covered>0&&!full;
+      const remaining=Math.max(0,assigned-covered);
+      const key=purchasePaidKey(x.id,owner);
+      const explicit=state.ccPurchaseCoverage[key];
+      const inputValue=(explicit!==undefined&&explicit!==null&&explicit!=='')?Number(explicit):'';
+
+      return `<div class="coverage-control">
+        <div class="coverage-main">
+          <label class="purchase-paid-check">
+            <input type="checkbox" data-purchase-paid="${x.id}" data-owner="${owner}" ${full?'checked':''}>
+            <span>${full?'Covered':partial?'Partially Covered':'Cover Full'}</span>
+          </label>
+          <button type="button" class="mini secondary partial-toggle" data-partial-toggle="${x.id}" data-owner="${owner}">${partial?'Edit Partial':'Partial'}</button>
+        </div>
+        <div class="partial-coverage-wrap ${partial?'show':''}" data-partial-wrap="${x.id}|${owner}">
+          <label>Amount covered
+            <input class="partial-coverage-input" type="number" min="0" max="${assigned.toFixed(2)}" step="0.01"
+              placeholder="${assigned.toFixed(2)}"
+              data-coverage-amount="${x.id}" data-owner="${owner}" value="${inputValue}">
+          </label>
+          <small>${covered>0?`${money.format(covered)} covered • ${money.format(remaining)} remaining`:`Enter only the amount covered. Leave blank and use Cover Full if fully paid.`}</small>
+        </div>
+      </div>`;
+    };
+
     if(x.owner==='shared'){
-      const pct=Math.max(0,Math.min(100,Number(x.khadijahShare||50))),ka=amount*pct/100,ma=amount-ka;
-      return `<div class="tx cc-purchase-row">
-        <div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • Shared ${pct}/${100-pct}${fx}</div>
+      const pct=Math.max(0,Math.min(100,Number(x.khadijahShare||50)));
+      const ka=amount*pct/100,ma=amount-ka;
+      return `<div class="tx cc-purchase-row shared-purchase-row">
+        <div class="cc-purchase-copy">
+          <strong>${x.description}</strong>
+          <div class="tx-meta">${x.date} • ${x.category} • Shared ${pct}/${100-pct}${fx}</div>
           <div class="shared-status-lines">
-            <div><span>Khadijah • ${money.format(ka)}</span><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="khadijah" ${isPurchasePaid(x.id,'khadijah')?'checked':''}><span>${isPurchasePaid(x.id,'khadijah')?'Covered':'Needs Coverage'}</span></label></div>
-            <div><span>Mom • ${money.format(ma)}</span><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="mom" ${isPurchasePaid(x.id,'mom')?'checked':''}><span>${isPurchasePaid(x.id,'mom')?'Covered':'Needs Coverage'}</span></label></div>
+            <div class="shared-person-coverage">
+              <div class="shared-person-title"><span>Khadijah</span><strong>${money.format(ka)}</strong></div>
+              ${coverageControl('khadijah',ka)}
+            </div>
+            <div class="shared-person-coverage">
+              <div class="shared-person-title"><span>Mom</span><strong>${money.format(ma)}</strong></div>
+              ${coverageControl('mom',ma)}
+            </div>
           </div>
-        </div><div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
+        </div>
+        <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
       </div>`;
     }
 
-    const owner=x.owner==='mom'?'Mom':'Khadijah',covered=isPurchasePaid(x.id,x.owner);
-    return `<div class="tx cc-purchase-row"><div><strong>${x.description}</strong><div class="tx-meta">${x.date} • ${x.category} • ${owner}${fx}</div></div>
-      <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong><label class="purchase-paid-check"><input type="checkbox" data-purchase-paid="${x.id}" data-owner="${x.owner}" ${covered?'checked':''}><span>${covered?'Covered':'Needs Coverage'}</span></label></div></div>`;
+    const owner=x.owner==='mom'?'mom':'khadijah';
+    const ownerLabel=owner==='mom'?'Mom':'Khadijah';
+
+    return `<div class="tx cc-purchase-row">
+      <div class="cc-purchase-copy">
+        <strong>${x.description}</strong>
+        <div class="tx-meta">${x.date} • ${x.category} • ${ownerLabel}${fx}</div>
+        ${coverageControl(owner,amount)}
+      </div>
+      <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
+    </div>`;
   }).join(''):'<p class="muted">No purchases match these filters for this billing cycle.</p>';
 
   // Payments explicitly applied to selected statement, regardless of payment date.
@@ -1080,10 +1197,34 @@ document.addEventListener('click',e=>{
 $('#periodSelect').addEventListener('change',e=>{periodOffset=Number(e.target.value);render()});$('#prevPeriod').onclick=()=>{periodOffset=Math.max(-18,periodOffset-1);render()};$('#nextPeriod').onclick=()=>{periodOffset=Math.min(12,periodOffset+1);render()};
 document.addEventListener('change',e=>{
   const box=e.target.closest('[data-purchase-paid]');
-  if(!box)return;
-  setPurchasePaid(box.dataset.purchasePaid,box.dataset.owner,box.checked);
-  save();
-  renderCreditCard();
+  if(box){
+    setPurchasePaid(box.dataset.purchasePaid,box.dataset.owner,box.checked);
+    save();
+    renderCreditCard();
+    return;
+  }
+
+  const amountInput=e.target.closest('[data-coverage-amount]');
+  if(amountInput){
+    setPurchaseCoverageAmount(
+      amountInput.dataset.coverageAmount,
+      amountInput.dataset.owner,
+      amountInput.value
+    );
+    save();
+    renderCreditCard();
+  }
+});
+
+document.addEventListener('click',e=>{
+  const toggle=e.target.closest('[data-partial-toggle]');
+  if(!toggle)return;
+  const key=`${toggle.dataset.partialToggle}|${toggle.dataset.owner}`;
+  const wrap=document.querySelector(`[data-partial-wrap="${key}"]`);
+  if(wrap){
+    wrap.classList.toggle('show');
+    if(wrap.classList.contains('show'))wrap.querySelector('input')?.focus();
+  }
 });
 
 $('#typeFilter').onchange=render;
