@@ -347,7 +347,8 @@
 </form></dialog>
 
 <dialog id="ccPurchaseModal"><form id="ccPurchaseForm">
-  <h3>Add Credit Card Purchase</h3>
+  <h3 id="ccPurchaseModalTitle">Add Credit Card Purchase</h3>
+  <input type="hidden" name="id">
   <label>Description<input name="description" required placeholder="Amazon, groceries, etc."></label>
   <label>Category<select name="category" required></select></label>
   <label>Owner<select name="owner" required><option value="khadijah">Khadijah</option><option value="mom">Mom</option><option value="shared">Shared</option></select></label>
@@ -359,7 +360,7 @@
     <label>Foreign Amount<input name="foreignAmount" type="number" min="0.01" step="0.01"></label>
     <div class="fx-preview">Effective rate: <strong id="effectiveRatePreview">—</strong></div>
   </div>
-  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit">Save Purchase</button></div>
+  <div class="row"><button type="button" data-close class="secondary">Cancel</button><button type="submit" id="ccPurchaseSubmitBtn">Save Purchase</button></div>
 </form></dialog>
 
 
@@ -881,7 +882,10 @@ function renderCreditCard(){
             </div>
           </div>
         </div>
-        <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
+        <div class="cc-purchase-right">
+          <strong class="negative">${money.format(amount)}</strong>
+          <button type="button" class="mini secondary" data-edit-cc-purchase="${x.id}">Edit</button>
+        </div>
       </div>`;
     }
 
@@ -894,7 +898,10 @@ function renderCreditCard(){
         <div class="tx-meta">${x.date} • ${x.category} • ${ownerLabel}${fx}</div>
         ${coverageControl(owner,amount)}
       </div>
-      <div class="cc-purchase-right"><strong class="negative">${money.format(amount)}</strong></div>
+      <div class="cc-purchase-right">
+        <strong class="negative">${money.format(amount)}</strong>
+        <button type="button" class="mini secondary" data-edit-cc-purchase="${x.id}">Edit</button>
+      </div>
     </div>`;
   }).join(''):'<p class="muted">No purchases match these filters for this billing cycle.</p>';
 
@@ -1055,7 +1062,16 @@ function open(id){
  if(id==='fundModal'){f.elements.name.value='High-Yield Savings';f.elements.date.value=todayIso()}
  if(id==='ccOwnerOpeningModal'){f.elements.khadijah.value=state.ccOwnerOpening?.khadijah||0;f.elements.mom.value=state.ccOwnerOpening?.mom||0}
  if(id==='ccPaymentModal'){f.elements.statementKey.innerHTML=statementOptionsHtml(statementCycle().key);f.elements.statementKey.value=statementCycle().key}
- if(id==='ccPurchaseModal'){$('#foreignAmountWrap').classList.add('hidden');$('#splitWrap').classList.add('hidden');$('#effectiveRatePreview').textContent='—'}
+ if(id==='ccPurchaseModal'){
+   $('#foreignAmountWrap').classList.add('hidden');
+   $('#splitWrap').classList.add('hidden');
+   $('#effectiveRatePreview').textContent='—';
+   if(f){
+     f.elements.id.value='';
+     $('#ccPurchaseModalTitle').textContent='Add Credit Card Purchase';
+     $('#ccPurchaseSubmitBtn').textContent='Save Purchase';
+   }
+ }
  if(d.showModal)d.showModal();else d.setAttribute('open','')
 }
 function closeDialog(el){let d=el.closest('dialog');if(d){if(d.close)d.close();else d.removeAttribute('open')}}
@@ -1068,6 +1084,25 @@ function categoryOptionHtml(selected){
 }
 function accountOptionHtml(selected){
  return state.accounts.map(a=>`<option value="${a.id}" ${a.id===selected?'selected':''}>${escHtml(a.name)}</option>`).join('');
+}
+function openCcPurchaseEditor(id){
+ const p=state.ccPurchases.find(x=>x.id===id);if(!p)return;
+ open('ccPurchaseModal');
+ const f=$('#ccPurchaseForm');
+ f.elements.id.value=p.id;
+ $('#ccPurchaseModalTitle').textContent='Edit Credit Card Purchase';
+ $('#ccPurchaseSubmitBtn').textContent='Save Changes';
+ f.elements.description.value=p.description||'';
+ f.elements.category.value=p.category||'';
+ f.elements.owner.value=p.owner||'khadijah';
+ f.elements.khadijahShare.value=Number(p.khadijahShare??50);
+ f.elements.date.value=p.date||todayIso();
+ f.elements.jmdAmount.value=Number(p.jmdAmount||0);
+ f.elements.currency.value=p.currency||'JMD';
+ f.elements.foreignAmount.value=p.foreignAmount??'';
+ $('#splitWrap').classList.toggle('hidden',f.elements.owner.value!=='shared');
+ $('#foreignAmountWrap').classList.toggle('hidden',f.elements.currency.value==='JMD');
+ updateFxPreview();
 }
 function openSavingEditor(id){
  const s=state.funds.find(x=>x.id===id);if(!s)return;
@@ -1132,6 +1167,9 @@ document.addEventListener('click',e=>{
    return;
  }
 
+
+ let editCcPurchase=e.target.closest('[data-edit-cc-purchase]');
+ if(editCcPurchase){openCcPurchaseEditor(editCcPurchase.dataset.editCcPurchase);return}
 
  let editCcPayment=e.target.closest('[data-edit-cc-payment]');
  if(editCcPayment){openCcPaymentEditor(editCcPayment.dataset.editCcPayment);return}
@@ -1257,7 +1295,43 @@ $('#ccOwnerOpeningForm').onsubmit=e=>{
   save();closeDialog(e.target);renderCreditCard();
 };
 $('#cardSettingsForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);state.creditCard={name:f.get('name').trim(),limit:Number(f.get('limit')||0)};save();closeDialog(e.target);renderCreditCard()};
-$('#ccPurchaseForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),cur=f.get('currency'),foreign=Number(f.get('foreignAmount')||0),jmd=Number(f.get('jmdAmount'));state.ccPurchases.push({id:uid(),description:f.get('description').trim(),category:f.get('category'),owner:f.get('owner'),khadijahShare:Number(f.get('khadijahShare')||50),date:f.get('date'),jmdAmount:jmd,currency:cur,foreignAmount:cur==='JMD'?null:foreign,effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null});save();closeDialog(e.target);render()};
+$('#ccPurchaseForm').onsubmit=e=>{
+  e.preventDefault();
+  let f=new FormData(e.target),
+      id=f.get('id'),
+      cur=f.get('currency'),
+      foreign=Number(f.get('foreignAmount')||0),
+      jmd=Number(f.get('jmdAmount'));
+
+  if(!Number.isFinite(jmd)||jmd<=0){
+    alert('Enter a valid JMD amount.');
+    return;
+  }
+
+  const purchase={
+    description:f.get('description').trim(),
+    category:f.get('category'),
+    owner:f.get('owner'),
+    khadijahShare:Number(f.get('khadijahShare')||50),
+    date:f.get('date'),
+    jmdAmount:jmd,
+    currency:cur,
+    foreignAmount:cur==='JMD'?null:foreign,
+    effectiveRate:cur!=='JMD'&&foreign>0?jmd/foreign:null
+  };
+
+  if(id){
+    const existing=state.ccPurchases.find(x=>x.id===id);
+    if(!existing)return;
+    Object.assign(existing,purchase);
+  }else{
+    state.ccPurchases.push({id:uid(),...purchase});
+  }
+
+  save();
+  closeDialog(e.target);
+  render();
+};
 $('#ccPaymentForm').onsubmit=e=>{
   e.preventDefault();
   let f=new FormData(e.target);

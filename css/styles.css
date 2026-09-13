@@ -700,3 +700,6 @@ html[data-theme="dark"] .partial-coverage-wrap small{
 @media(max-width:600px){
   .partial-coverage-wrap{max-width:none}
 }
+
+.cc-purchase-right{display:grid;justify-items:end;gap:7px;align-content:start}
+.cc-purchase-right .mini{min-width:54px}
